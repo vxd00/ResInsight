@@ -126,6 +126,7 @@ list( APPEND REFERENCED_CMAKE_FILES
     UserInterface/CMakeLists_files.cmake
     
     Commands/CMakeLists_files.cmake
+	Commands/DeleteCollectionItemCommands/CMakeLists_files.cmake
     Commands/ApplicationCommands/CMakeLists_files.cmake
     Commands/AnnotationCommands/CMakeLists_files.cmake
     Commands/CompletionCommands/CMakeLists_files.cmake

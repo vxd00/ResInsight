@@ -954,6 +954,12 @@ caf::CmdFeatureMenuBuilder RimContextCommandBuilder::commandsFromSelection()
         menuBuilder << "RicDeleteItemFeature";
     }
 
+	{
+        menuBuilder << "Separator";
+        menuBuilder << "RicDeleteAllItemsInCollectionFeature";
+
+    }
+
     if (caf::CmdFeatureManager::instance()->getCommandFeature("RicDeleteSubItemsFeature")->canFeatureBeExecuted())
     {
         menuBuilder << "Separator";

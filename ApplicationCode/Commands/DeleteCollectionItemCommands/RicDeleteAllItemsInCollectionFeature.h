@@ -1,6 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (C) 2019- Equinor ASA
+//  Copyright (C) 2015-     Statoil ASA
+//  Copyright (C) 2015-     Ceetron Solutions AS
 //
 //  ResInsight is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -15,37 +16,20 @@
 //  for more details.
 //
 /////////////////////////////////////////////////////////////////////////////////
+
 #pragma once
 
-#include "DeleteCollectionItemCommands/RicDeletableItemCollection.h"
-
-#include "cafPdmChildArrayField.h"
-#include "cafPdmObject.h"
-
-class RimSaturationPressurePlot;
-class RimEclipseResultCase;
+#include "cafCmdFeature.h"
 
 //==================================================================================================
 ///
-///
 //==================================================================================================
-class RimSaturationPressurePlotCollection : public RicDeletableItemCollection, public caf::PdmObject
+class RicDeleteAllItemsInCollectionFeature : public caf::CmdFeature
 {
-    CAF_PDM_HEADER_INIT;
-
-public:
-    RimSaturationPressurePlotCollection();
-    ~RimSaturationPressurePlotCollection() override;
-
-    std::vector<RimSaturationPressurePlot*> createSaturationPressurePlots(RimEclipseResultCase* eclipseResultCase);
-
-    std::vector<RimSaturationPressurePlot*> plots();
-    void                                    deleteAllChildObjects();
+    CAF_CMD_HEADER_INIT;
 
 protected:
-    void doUpdateAfterDeleteOfItems() override;
-    void doDeleteAllSubItems() override;
-
-private:
-    caf::PdmChildArrayField<RimSaturationPressurePlot*> m_saturationPressurePlots;
+    bool isCommandEnabled() override;
+    void onActionTriggered(bool isChecked) override;
+    void setupActionLook(QAction* actionToSetup) override;
 };

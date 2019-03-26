@@ -88,5 +88,21 @@ std::vector<RimSaturationPressurePlot*> RimSaturationPressurePlotCollection::plo
 //--------------------------------------------------------------------------------------------------
 void RimSaturationPressurePlotCollection::deleteAllChildObjects()
 {
+    doDeleteAllSubItems();
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RimSaturationPressurePlotCollection::doUpdateAfterDeleteOfItems()
+{
+    updateAllRequiredEditors();
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RimSaturationPressurePlotCollection::doDeleteAllSubItems()
+{
     m_saturationPressurePlots.deleteAllChildObjects();
 }
