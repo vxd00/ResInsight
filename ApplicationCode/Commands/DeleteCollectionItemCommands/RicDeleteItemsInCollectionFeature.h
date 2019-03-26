@@ -19,33 +19,27 @@
 
 #pragma once
 
+#include "cafCmdFeature.h"
+
+class RicDeletableItemCollection;
+
 namespace caf
 {
-class PdmChildArrayFieldHandle;
-class PdmObjectHandle;
+class PdmUiItem;
 }
 
 //==================================================================================================
 ///
 //==================================================================================================
-class RicDeletableItemCollection
+class RicDeleteItemsInCollectionFeature : public caf::CmdFeature
 {
-public:
-    void updateAfterDeleteOfItems()
-    {
-        doUpdateAfterDeleteOfItems();
-    }
-
-    void deleteAllSubItems()
-    {
-        doDeleteAllSubItems();
-    }
-
-	virtual void deleteObject(caf::PdmObjectHandle* object) = 0;
-
-    virtual caf::PdmChildArrayFieldHandle* childArrayFieldHandle() = 0;
+    CAF_CMD_HEADER_INIT;
 
 protected:
-    virtual void doUpdateAfterDeleteOfItems() = 0;
-    virtual void doDeleteAllSubItems()        = 0;
+    bool isCommandEnabled() override;
+    void onActionTriggered(bool isChecked) override;
+    void setupActionLook(QAction* actionToSetup) override;
+
+private:
+    static RicDeletableItemCollection* deletableItemCollection(caf::PdmUiItem* item);
 };

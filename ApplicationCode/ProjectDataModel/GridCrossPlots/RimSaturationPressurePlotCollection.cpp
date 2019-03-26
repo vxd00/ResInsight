@@ -94,6 +94,16 @@ void RimSaturationPressurePlotCollection::deleteAllChildObjects()
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+void RimSaturationPressurePlotCollection::deleteObject(caf::PdmObjectHandle* object)
+{
+    m_saturationPressurePlots.removeChildObject(object);
+
+    delete object;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 caf::PdmChildArrayFieldHandle* RimSaturationPressurePlotCollection::childArrayFieldHandle()
 {
     return &m_saturationPressurePlots;

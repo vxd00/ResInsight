@@ -43,6 +43,7 @@ public:
     void                                    deleteAllChildObjects();
 
 protected:
+    void                           deleteObject(caf::PdmObjectHandle* object) override;
     caf::PdmChildArrayFieldHandle* childArrayFieldHandle() override;
     void                           doUpdateAfterDeleteOfItems() override;
     void                           doDeleteAllSubItems() override;
