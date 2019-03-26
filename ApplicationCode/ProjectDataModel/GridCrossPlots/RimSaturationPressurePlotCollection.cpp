@@ -94,6 +94,14 @@ void RimSaturationPressurePlotCollection::deleteAllChildObjects()
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+caf::PdmChildArrayFieldHandle* RimSaturationPressurePlotCollection::childArrayFieldHandle()
+{
+    return &m_saturationPressurePlots;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 void RimSaturationPressurePlotCollection::doUpdateAfterDeleteOfItems()
 {
     updateAllRequiredEditors();

@@ -19,6 +19,11 @@
 
 #pragma once
 
+namespace caf
+{
+class PdmChildArrayFieldHandle;
+}
+
 //==================================================================================================
 ///
 //==================================================================================================
@@ -34,6 +39,8 @@ public:
     {
         doDeleteAllSubItems();
     }
+
+    virtual caf::PdmChildArrayFieldHandle* childArrayFieldHandle() = 0;
 
 protected:
     virtual void doUpdateAfterDeleteOfItems() = 0;

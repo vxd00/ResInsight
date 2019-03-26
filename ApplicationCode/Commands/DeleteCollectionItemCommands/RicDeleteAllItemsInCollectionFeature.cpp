@@ -20,6 +20,7 @@
 #include "RicDeleteAllItemsInCollectionFeature.h"
 #include "RicDeletableItemCollection.h"
 
+#include "cafPdmChildArrayField.h"
 #include "cafPdmUiItem.h"
 #include "cafSelectionManager.h"
 
@@ -32,13 +33,20 @@ CAF_CMD_SOURCE_INIT(RicDeleteAllItemsInCollectionFeature, "RicDeleteAllItemsInCo
 //--------------------------------------------------------------------------------------------------
 bool RicDeleteAllItemsInCollectionFeature::isCommandEnabled()
 {
+    caf::PdmChildArrayFieldHandle* childArrayFieldHandle = nullptr;
+
     caf::PdmUiItem* selectedItem = caf::SelectionManager::instance()->selectedItem();
 
     RicDeletableItemCollection* deletableItemCollection = dynamic_cast<RicDeletableItemCollection*>(selectedItem);
 
-    if (deletableItemCollection)
+    if (deletableItemCollection && deletableItemCollection->childArrayFieldHandle())
     {
-        return true;
+        childArrayFieldHandle = deletableItemCollection->childArrayFieldHandle();
+    }
+
+    if (childArrayFieldHandle)
+    {
+        return childArrayFieldHandle->hasChildObjects();
     }
 
     return false;

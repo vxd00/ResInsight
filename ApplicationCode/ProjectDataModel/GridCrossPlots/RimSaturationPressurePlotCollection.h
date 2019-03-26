@@ -43,8 +43,9 @@ public:
     void                                    deleteAllChildObjects();
 
 protected:
-    void doUpdateAfterDeleteOfItems() override;
-    void doDeleteAllSubItems() override;
+    caf::PdmChildArrayFieldHandle* childArrayFieldHandle() override;
+    void                           doUpdateAfterDeleteOfItems() override;
+    void                           doDeleteAllSubItems() override;
 
 private:
     caf::PdmChildArrayField<RimSaturationPressurePlot*> m_saturationPressurePlots;
