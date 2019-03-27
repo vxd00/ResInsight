@@ -73,6 +73,10 @@ bool RiuTreeViewEventFilter::eventFilter(QObject *obj, QEvent *event)
             {
                 matches.push_back(caf::CmdFeatureManager::instance()->getCommandFeature("RicCutReferencesToClipboardFeature"));
             }
+            else if (keyEvent->matches(QKeySequence::Delete))
+            {
+                matches.push_back(caf::CmdFeatureManager::instance()->getCommandFeature("RicDeleteItemsInCollectionFeature"));
+            }
             else if (keyEvent->matches(QKeySequence::Paste))
             {
                 if (uiItems.size() == 1)
