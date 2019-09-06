@@ -79,6 +79,9 @@ public:
     const QString& dateFormat() const;
     const QString& timeFormat() const;
 
+    bool searchPlotTemplateFoldersRecursively() const;
+    QStringList plotTemplateFolders() const;
+
     std::map<RiaDefines::FontSettingType, RiaFontCache::FontSize> defaultFontSizes() const;
 
 public: // Pdm Fields
@@ -157,10 +160,14 @@ private:
 
     caf::PdmField<bool> m_showProjectChangedDialog;
 
-    caf::PdmField<bool>    m_showTestToolbar;
-    caf::PdmField<bool>    m_includeFractureDebugInfoFile;
-    caf::PdmField<QString> m_holoLensExportFolder;
-    caf::PdmField<QString> m_dateFormat;
-    caf::PdmField<QString> m_timeFormat;
-    QStringList            m_tabNames;
+    caf::PdmField<bool>                    m_showTestToolbar;
+    caf::PdmField<bool>                    m_includeFractureDebugInfoFile;
+    caf::PdmField<QString>                 m_holoLensExportFolder;
+    caf::PdmField<QString>                 m_dateFormat;
+    caf::PdmField<QString>                 m_timeFormat;
+
+    caf::PdmField<QString>                 m_plotTemplateFolders;
+    caf::PdmField<bool>                    m_searchPlotTemplateFoldersRecursively;
+
+    QStringList                            m_tabNames;
 };

@@ -116,6 +116,7 @@ list( APPEND REFERENCED_CMAKE_FILES
     ReservoirDataModel/Completions/CMakeLists_files.cmake
     FileInterface/CMakeLists_files.cmake
     
+
     ProjectDataModel/CMakeLists_files.cmake
     ProjectDataModel/GridCrossPlots/CMakeLists_files.cmake
     ProjectDataModel/GridCrossPlots/CellFilters/CMakeLists_files.cmake
@@ -124,6 +125,7 @@ list( APPEND REFERENCED_CMAKE_FILES
     ProjectDataModel/Annotations/CMakeLists_files.cmake
     ProjectDataModel/Completions/CMakeLists_files.cmake
     ProjectDataModel/Measurement/CMakeLists_files.cmake
+    ProjectDataModel/PlotTemplates/CMakeLists_files.cmake
     
     GeoMech/GeoMechVisualization/CMakeLists_files.cmake
     

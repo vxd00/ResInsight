@@ -77,6 +77,7 @@
 #include "RimWellPath.h"
 #include "RimWellPathCollection.h"
 #include "SsiHubImportCommands/RimWellPathImport.h"
+#include "PlotTemplates/RimPlotTemplateFolderItem.h"
 
 #include "RiuMainWindow.h"
 #include "RiuPlotMainWindow.h"
@@ -190,6 +191,10 @@ RimProject::RimProject( void )
     scriptCollection->uiCapability()->setUiIconFromResourceString( ":/octave.png" );
 
     mainPlotCollection = new RimMainPlotCollection();
+
+    CAF_PDM_InitFieldNoDefault(&m_plotTemplateFolderItem, "PlotTemplateCollection", "Plot Templates", "", "", "");
+    m_plotTemplateFolderItem = new RimPlotTemplateFolderItem();
+    m_plotTemplateFolderItem.xmlCapability()->disableIO();
 
     // For now, create a default first oilfield that contains the rest of the project
     oilFields.push_back( new RimOilField );
@@ -355,6 +360,17 @@ void RimProject::setScriptDirectories( const QString& scriptDirectories )
 
 //--------------------------------------------------------------------------------------------------
 ///
+//--------------------------------------------------------------------------------------------------
+void RimProject::setPlotTemplateFolders(const QStringList& plotTemplateFolders)
+{
+    if (m_plotTemplateFolderItem()) delete m_plotTemplateFolderItem();
+    m_plotTemplateFolderItem = new RimPlotTemplateFolderItem();
+
+    m_plotTemplateFolderItem->createRootFolderItemsFromFolderPaths(plotTemplateFolders);
+}
+
+//--------------------------------------------------------------------------------------------------
+/// 
 //--------------------------------------------------------------------------------------------------
 QString RimProject::projectFileVersionString() const
 {
@@ -1237,6 +1253,8 @@ void RimProject::defineUiTreeOrdering( caf::PdmUiTreeOrdering& uiTreeOrdering, Q
                 itemCollection->add( mainPlotCollection->saturationPressurePlotCollection() );
             }
         }
+
+        uiTreeOrdering.add(m_plotTemplateFolderItem());
     }
     else
     {
