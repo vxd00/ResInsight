@@ -550,6 +550,8 @@ caf::CmdFeatureMenuBuilder RimContextCommandBuilder::commandsFromSelection()
             menuBuilder << "Separator";
             menuBuilder << "RicShowSummaryCurveCalculatorFeature";
             menuBuilder << "Separator";
+            menuBuilder << "RicSavePlotTemplateFeature";
+            menuBuilder << "Separator";
 
             // Export is not supported for cross plot
             if ( !summaryCrossPlot ) menuBuilder << "RicAsciiExportSummaryPlotFeature";

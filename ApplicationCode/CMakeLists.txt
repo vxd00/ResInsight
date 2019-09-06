@@ -159,6 +159,7 @@ list( APPEND REFERENCED_CMAKE_FILES
     Commands/ViewLink/CMakeLists_files.cmake
     Commands/WellLogCommands/CMakeLists_files.cmake
     Commands/WellPathCommands/CMakeLists_files.cmake
+    Commands/PlotTemplateCommands/CMakeLists_files.cmake
 
     CommandFileInterface/CMakeLists_files.cmake
     CommandFileInterface/Core/CMakeLists_files.cmake

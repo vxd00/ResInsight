@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (C) 2011-2012 Statoil ASA, Ceetron AS
+//  Copyright (C) 2016-     Statoil ASA
 //
 //  ResInsight is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -18,23 +18,25 @@
 
 #pragma once
 
-#include "cafPdmField.h"
-#include "cafPdmObject.h"
+#include "cafCmdFeature.h"
+
+class RimSummaryPlot;
 
 //==================================================================================================
 ///
-///
 //==================================================================================================
-class RimPlotTemplateFileItem : public caf::PdmObject
+class RicSavePlotTemplateFeature : public caf::CmdFeature
 {
-    CAF_PDM_HEADER_INIT;
+    CAF_CMD_HEADER_INIT;
 
 public:
-    RimPlotTemplateFileItem();
-    ~RimPlotTemplateFileItem() override;
+    RicSavePlotTemplateFeature();
 
-    void setFilePath( const QString& filePath );
+protected:
+    bool isCommandEnabled() override;
+    void onActionTriggered( bool isChecked ) override;
+    void setupActionLook( QAction* actionToSetup ) override;
 
 private:
-    caf::PdmField<QString> m_absoluteFileName;
+    RimSummaryPlot* selectedSummaryPlot() const;
 };

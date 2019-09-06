@@ -36,9 +36,8 @@ RimPlotTemplateFileItem::RimPlotTemplateFileItem()
 {
     CAF_PDM_InitObject( "PlotTemplateFileItem", ":/OctaveScriptFile16x16.png", "Calc Script", "" );
 
-    CAF_PDM_InitField( &absoluteFileName, "AbsolutePath", QString(), "Location", "", "", "" );
-
-    absoluteFileName.uiCapability()->setUiEditorTypeName( caf::PdmUiFilePathEditor::uiEditorTypeName() );
+    CAF_PDM_InitField( &m_absoluteFileName, "AbsolutePath", QString(), "Location", "", "", "" );
+    m_absoluteFileName.uiCapability()->setUiReadOnly( true );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -54,5 +53,5 @@ void RimPlotTemplateFileItem::setFilePath( const QString& filePath )
     QFileInfo fi( filePath );
     this->uiCapability()->setUiName( fi.baseName() );
 
-    absoluteFileName = filePath;
+    m_absoluteFileName = filePath;
 }
