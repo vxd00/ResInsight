@@ -20,17 +20,17 @@
 
 #include "cafCmdFeature.h"
 
-class RimSummaryPlot;
+class RimSummaryCase;
 
 //==================================================================================================
 ///
 //==================================================================================================
-class RicSavePlotTemplateFeature : public caf::CmdFeature
+class RicCreatePlotFromSelectionFeature : public caf::CmdFeature
 {
     CAF_CMD_HEADER_INIT;
 
 public:
-    RicSavePlotTemplateFeature();
+    RicCreatePlotFromSelectionFeature();
 
 protected:
     bool isCommandEnabled() override;
@@ -38,5 +38,5 @@ protected:
     void setupActionLook( QAction* actionToSetup ) override;
 
 private:
-    RimSummaryPlot* selectedSummaryPlot() const;
+    std::vector<RimSummaryCase*> selectedSummaryCases() const;
 };

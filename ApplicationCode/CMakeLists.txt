@@ -116,7 +116,6 @@ list( APPEND REFERENCED_CMAKE_FILES
     ReservoirDataModel/Completions/CMakeLists_files.cmake
     FileInterface/CMakeLists_files.cmake
     
-
     ProjectDataModel/CMakeLists_files.cmake
     ProjectDataModel/GridCrossPlots/CMakeLists_files.cmake
     ProjectDataModel/GridCrossPlots/CellFilters/CMakeLists_files.cmake

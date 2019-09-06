@@ -845,6 +845,8 @@ caf::CmdFeatureMenuBuilder RimContextCommandBuilder::commandsFromSelection()
         menuBuilder << "RicDeleteSummaryCaseCollectionFeature";
         menuBuilder << "RicCloseObservedDataFeature";
 
+        menuBuilder << "RicCreatePlotFromSelectionFeature";
+
         // Work in progress -- End
         appendCreateCompletions( menuBuilder, menuBuilder.itemCount() > 0u );
         bool addedExportWellPaths = appendExportWellPaths( menuBuilder, menuBuilder.itemCount() > 0u ) > 0;
