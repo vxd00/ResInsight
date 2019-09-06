@@ -1117,8 +1117,8 @@ void RiaApplication::applyPreferences()
 
     if ( this->project() )
     {
-        this->project()->setScriptDirectories(m_preferences->scriptDirectories());
-        this->project()->setPlotTemplateFolders(m_preferences->plotTemplateFolders());
+        this->project()->setScriptDirectories( m_preferences->scriptDirectories() );
+        this->project()->setPlotTemplateFolders( m_preferences->plotTemplateFolders() );
         this->project()->updateConnectedEditors();
     }
     caf::PdmSettings::writeFieldsToApplicationStore( m_preferences );
@@ -1415,8 +1415,8 @@ void RiaApplication::initialize()
 
     // Start with a project
     m_project = new RimProject;
-    m_project->setScriptDirectories(m_preferences->scriptDirectories());
-    m_project->setPlotTemplateFolders(m_preferences->plotTemplateFolders());
+    m_project->setScriptDirectories( m_preferences->scriptDirectories() );
+    m_project->setPlotTemplateFolders( m_preferences->plotTemplateFolders() );
 }
 
 //--------------------------------------------------------------------------------------------------

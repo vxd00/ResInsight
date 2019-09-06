@@ -104,8 +104,8 @@ public:
     caf::PdmField<QString> plotWindowTreeViewState;
     caf::PdmField<QString> plotWindowCurrentModelIndexPath;
 
-    void            setScriptDirectories(const QString& scriptDirectories);
-    void            setPlotTemplateFolders(const QStringList& plotTemplateFolders);
+    void setScriptDirectories( const QString& scriptDirectories );
+    void setPlotTemplateFolders( const QStringList& plotTemplateFolders );
 
     QString projectFileVersionString() const;
     bool    isProjectFileVersionEqualOrOlderThan( const QString& otherProjectFileVersion ) const;
@@ -186,9 +186,9 @@ private:
     void fieldContentsByType( caf::PdmObjectHandle* object, std::vector<T*>& typedFields );
 
 private:
-    caf::PdmField<QString>  m_projectFileVersionString;
+    caf::PdmField<QString> m_projectFileVersionString;
 
-    caf::PdmChildField<RimDialogData*>  m_dialogData;
+    caf::PdmChildField<RimDialogData*>             m_dialogData;
     caf::PdmChildField<RimPlotTemplateFolderItem*> m_plotTemplateFolderItem;
 
     caf::PdmField<bool> m_show3DWindow;

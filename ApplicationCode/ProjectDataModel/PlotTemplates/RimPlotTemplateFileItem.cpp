@@ -27,18 +27,18 @@
 
 #include <QFileInfo>
 
-CAF_PDM_SOURCE_INIT(RimPlotTemplateFileItem, "PlotTemplateFileItem");
+CAF_PDM_SOURCE_INIT( RimPlotTemplateFileItem, "PlotTemplateFileItem" );
 
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
 RimPlotTemplateFileItem::RimPlotTemplateFileItem()
 {
-    CAF_PDM_InitObject("PlotTemplateFileItem", ":/OctaveScriptFile16x16.png", "Calc Script", "");
+    CAF_PDM_InitObject( "PlotTemplateFileItem", ":/OctaveScriptFile16x16.png", "Calc Script", "" );
 
-    CAF_PDM_InitField(&absoluteFileName, "AbsolutePath", QString(), "Location", "", "", "");
+    CAF_PDM_InitField( &absoluteFileName, "AbsolutePath", QString(), "Location", "", "", "" );
 
-    absoluteFileName.uiCapability()->setUiEditorTypeName(caf::PdmUiFilePathEditor::uiEditorTypeName());
+    absoluteFileName.uiCapability()->setUiEditorTypeName( caf::PdmUiFilePathEditor::uiEditorTypeName() );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -49,10 +49,10 @@ RimPlotTemplateFileItem::~RimPlotTemplateFileItem() {}
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-void RimPlotTemplateFileItem::setFilePath(const QString& filePath)
+void RimPlotTemplateFileItem::setFilePath( const QString& filePath )
 {
-    QFileInfo fi(filePath);
-    this->uiCapability()->setUiName(fi.baseName());
+    QFileInfo fi( filePath );
+    this->uiCapability()->setUiName( fi.baseName() );
 
     absoluteFileName = filePath;
 }

@@ -41,19 +41,21 @@ public:
     RimPlotTemplateFolderItem();
     ~RimPlotTemplateFolderItem() override;
 
-    void createRootFolderItemsFromFolderPaths(const QStringList& folderPaths);
+    void createRootFolderItemsFromFolderPaths( const QStringList& folderPaths );
 
 private:
     void searchForFileAndFolderNames();
-    void setFolderPath(const QString& path);
-    void createSubFolderItemsFromFolderPaths(const QStringList& folderPaths);
+    void setFolderPath( const QString& path );
+    void createSubFolderItemsFromFolderPaths( const QStringList& folderPaths );
 
     bool searchSubFoldersRecursively() const;
 
-    void fieldChangedByUi(const caf::PdmFieldHandle* changedField, const QVariant& oldValue, const QVariant& newValue) override;
-    void defineEditorAttribute(const caf::PdmFieldHandle* field,
-                               QString                    uiConfigName,
-                               caf::PdmUiEditorAttribute* attribute) override;
+    void fieldChangedByUi( const caf::PdmFieldHandle* changedField,
+                           const QVariant&            oldValue,
+                           const QVariant&            newValue ) override;
+    void defineEditorAttribute( const caf::PdmFieldHandle* field,
+                                QString                    uiConfigName,
+                                caf::PdmUiEditorAttribute* attribute ) override;
 
 private:
     caf::PdmField<caf::FilePath>                        m_folderName;

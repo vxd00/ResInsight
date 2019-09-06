@@ -29,20 +29,20 @@
 #include <QDir>
 #include <QStringList>
 
-CAF_PDM_SOURCE_INIT(RimPlotTemplateFolderItem, "PlotTemplateCollection");
+CAF_PDM_SOURCE_INIT( RimPlotTemplateFolderItem, "PlotTemplateCollection" );
 
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
 RimPlotTemplateFolderItem::RimPlotTemplateFolderItem()
 {
-    CAF_PDM_InitObject("PlotTemplateCollection", ":/Folder.png", "", "");
+    CAF_PDM_InitObject( "PlotTemplateCollection", ":/Folder.png", "", "" );
 
-    CAF_PDM_InitFieldNoDefault(&m_folderName, "FolderName", "Folder", "", "", "");
-    CAF_PDM_InitFieldNoDefault(&m_fileNames, "FileNames", "", "", "", "");
-    m_fileNames.uiCapability()->setUiHidden(true);
-    CAF_PDM_InitFieldNoDefault(&m_subFolders, "SubFolders", "", "", "", "");
-    m_subFolders.uiCapability()->setUiHidden(true);
+    CAF_PDM_InitFieldNoDefault( &m_folderName, "FolderName", "Folder", "", "", "" );
+    CAF_PDM_InitFieldNoDefault( &m_fileNames, "FileNames", "", "", "", "" );
+    m_fileNames.uiCapability()->setUiHidden( true );
+    CAF_PDM_InitFieldNoDefault( &m_subFolders, "SubFolders", "", "", "", "" );
+    m_subFolders.uiCapability()->setUiHidden( true );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -53,20 +53,20 @@ RimPlotTemplateFolderItem::~RimPlotTemplateFolderItem() {}
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-void RimPlotTemplateFolderItem::createRootFolderItemsFromFolderPaths(const QStringList& folderPaths)
+void RimPlotTemplateFolderItem::createRootFolderItemsFromFolderPaths( const QStringList& folderPaths )
 {
-    createSubFolderItemsFromFolderPaths(folderPaths);
+    createSubFolderItemsFromFolderPaths( folderPaths );
 }
 
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-void RimPlotTemplateFolderItem::setFolderPath(const QString& path)
+void RimPlotTemplateFolderItem::setFolderPath( const QString& path )
 {
-    m_folderName.v().setPath(path);
+    m_folderName.v().setPath( path );
 
-    QFileInfo fi(path);
-    this->uiCapability()->setUiName(fi.baseName());
+    QFileInfo fi( path );
+    this->uiCapability()->setUiName( fi.baseName() );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -77,17 +77,17 @@ void RimPlotTemplateFolderItem::searchForFileAndFolderNames()
     m_fileNames.deleteAllChildObjects();
     m_subFolders.deleteAllChildObjects();
 
-    if (m_folderName().path().isEmpty())
+    if ( m_folderName().path().isEmpty() )
     {
-        for (size_t i = 0; i < m_subFolders.size(); ++i)
+        for ( size_t i = 0; i < m_subFolders.size(); ++i )
         {
-            if (m_subFolders[i]) m_subFolders[i]->searchForFileAndFolderNames();
+            if ( m_subFolders[i] ) m_subFolders[i]->searchForFileAndFolderNames();
         }
         return;
     }
 
-    QDir myDir(this->m_folderName().path());
-    if (!myDir.isReadable())
+    QDir myDir( this->m_folderName().path() );
+    if ( !myDir.isReadable() )
     {
         return;
     }
@@ -96,48 +96,48 @@ void RimPlotTemplateFolderItem::searchForFileAndFolderNames()
     {
         QStringList nameFilters;
         nameFilters << "*.rpt";
-        QStringList fileList = caf::Utils::getFilesInDirectory(m_folderName().path(), nameFilters, true);
+        QStringList fileList = caf::Utils::getFilesInDirectory( m_folderName().path(), nameFilters, true );
 
-        for (int i = 0; i < fileList.size(); i++)
+        for ( int i = 0; i < fileList.size(); i++ )
         {
-            const QString& fileName = fileList.at(i);
+            const QString& fileName = fileList.at( i );
 
-            if (caf::Utils::fileExists(fileName))
+            if ( caf::Utils::fileExists( fileName ) )
             {
                 RimPlotTemplateFileItem* fileItem = new RimPlotTemplateFileItem();
-                fileItem->setFilePath(fileName);
-                m_fileNames.push_back(fileItem);
+                fileItem->setFilePath( fileName );
+                m_fileNames.push_back( fileItem );
             }
         }
     }
 
-    if (searchSubFoldersRecursively())
+    if ( searchSubFoldersRecursively() )
     {
         QStringList folderPaths;
 
-        QDir          dir(m_folderName().path());
-        QFileInfoList fileInfoList = dir.entryInfoList(QDir::AllDirs | QDir::NoDotAndDotDot | QDir::Readable);
+        QDir          dir( m_folderName().path() );
+        QFileInfoList fileInfoList = dir.entryInfoList( QDir::AllDirs | QDir::NoDotAndDotDot | QDir::Readable );
 
-        for (const auto& fi : fileInfoList)
+        for ( const auto& fi : fileInfoList )
         {
-            folderPaths.push_back(fi.absoluteFilePath());
+            folderPaths.push_back( fi.absoluteFilePath() );
         }
 
-        createSubFolderItemsFromFolderPaths(folderPaths);
+        createSubFolderItemsFromFolderPaths( folderPaths );
     }
 }
 
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-void RimPlotTemplateFolderItem::fieldChangedByUi(const caf::PdmFieldHandle* changedField,
-                                                 const QVariant&            oldValue,
-                                                 const QVariant&            newValue)
+void RimPlotTemplateFolderItem::fieldChangedByUi( const caf::PdmFieldHandle* changedField,
+                                                  const QVariant&            oldValue,
+                                                  const QVariant&            newValue )
 {
-    if (&m_folderName == changedField)
+    if ( &m_folderName == changedField )
     {
-        QFileInfo fi(m_folderName().path());
-        this->setUiName(fi.baseName());
+        QFileInfo fi( m_folderName().path() );
+        this->setUiName( fi.baseName() );
 
         this->searchForFileAndFolderNames();
     }
@@ -146,14 +146,14 @@ void RimPlotTemplateFolderItem::fieldChangedByUi(const caf::PdmFieldHandle* chan
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-void RimPlotTemplateFolderItem::defineEditorAttribute(const caf::PdmFieldHandle* field,
-                                                      QString                    uiConfigName,
-                                                      caf::PdmUiEditorAttribute* attribute)
+void RimPlotTemplateFolderItem::defineEditorAttribute( const caf::PdmFieldHandle* field,
+                                                       QString                    uiConfigName,
+                                                       caf::PdmUiEditorAttribute* attribute )
 {
-    if (field == &m_folderName)
+    if ( field == &m_folderName )
     {
-        caf::PdmUiFilePathEditorAttribute* myAttr = dynamic_cast<caf::PdmUiFilePathEditorAttribute*>(attribute);
-        if (myAttr)
+        caf::PdmUiFilePathEditorAttribute* myAttr = dynamic_cast<caf::PdmUiFilePathEditorAttribute*>( attribute );
+        if ( myAttr )
         {
             myAttr->m_selectDirectory = true;
         }
@@ -163,15 +163,15 @@ void RimPlotTemplateFolderItem::defineEditorAttribute(const caf::PdmFieldHandle*
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-void RimPlotTemplateFolderItem::createSubFolderItemsFromFolderPaths(const QStringList& folderPaths)
+void RimPlotTemplateFolderItem::createSubFolderItemsFromFolderPaths( const QStringList& folderPaths )
 {
-    for (const auto& path : folderPaths)
+    for ( const auto& path : folderPaths )
     {
         RimPlotTemplateFolderItem* scriptLocation = new RimPlotTemplateFolderItem();
-        scriptLocation->setFolderPath(path);
+        scriptLocation->setFolderPath( path );
         scriptLocation->searchForFileAndFolderNames();
 
-        m_subFolders.push_back(scriptLocation);
+        m_subFolders.push_back( scriptLocation );
     }
 }
 
