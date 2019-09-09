@@ -38,6 +38,8 @@ class RimSummaryPlot;
 class RiaSummaryCurveDefinition;
 class RiaCurveSetDefinition;
 class SummaryIdentifierAndField;
+class RimPlotTemplateFolderItem;
+class RimPlotTemplateFileItem;
 
 using SummarySource = caf::PdmObject;
 
@@ -110,6 +112,10 @@ private:
     void appendOptionItemsForCategories( QList<caf::PdmOptionItemInfo>& options ) const;
     void appendOptionItemsForSubCategoriesAndVectors( QList<caf::PdmOptionItemInfo>& options,
                                                       SummaryIdentifierAndField*     identifierAndField ) const;
+
+    void appendOptionItemsForPlotTemplates( QList<caf::PdmOptionItemInfo>& options,
+                                            RimPlotTemplateFolderItem*     templateFolderItem,
+                                            int                            menuLevel ) const;
 
 private:
     caf::PdmPtrArrayField<SummarySource*> m_selectedSources;

@@ -55,3 +55,11 @@ void RimPlotTemplateFileItem::setFilePath( const QString& filePath )
 
     m_absoluteFileName = filePath;
 }
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+QString RimPlotTemplateFileItem::absoluteFilePath() const
+{
+    return m_absoluteFileName();
+}

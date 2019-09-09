@@ -26,6 +26,9 @@
 #include "RifEclipseSummaryAddress.h"
 #include "RifSummaryReaderInterface.h"
 
+#include "PlotTemplates/RimPlotTemplateFileItem.h"
+#include "PlotTemplates/RimPlotTemplateFolderItem.h"
+
 #include "RimCalculatedSummaryCase.h"
 #include "RimObservedDataCollection.h"
 #include "RimObservedSummaryData.h"
@@ -1476,5 +1479,35 @@ void RiuSummaryCurveDefSelection::appendOptionItemsForSubCategoriesAndVectors(
             if ( groupItems ) optionItem.setLevel( 1 );
             options.push_back( optionItem );
         }
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RiuSummaryCurveDefSelection::appendOptionItemsForPlotTemplates( QList<caf::PdmOptionItemInfo>& options,
+                                                                     RimPlotTemplateFolderItem*     templateFolderItem,
+                                                                     int                            menuLevel ) const
+{
+    {
+        auto subFolders = templateFolderItem->subFolders();
+        for ( auto sub : subFolders )
+        {
+            caf::PdmOptionItemInfo optionInfo = caf::PdmOptionItemInfo::createHeader( sub->uiName(), true );
+            optionInfo.setLevel( menuLevel + 1 );
+            options.push_back( optionInfo );
+
+            appendOptionItemsForPlotTemplates( options, sub, menuLevel + 1 );
+        }
+    }
+
+    auto files = templateFolderItem->fileNames();
+    for ( auto file : files )
+    {
+        const QString          templatePrefix = "$TEMPLATE|";
+        caf::PdmOptionItemInfo optionInfo( file->uiName(), templatePrefix + file->absoluteFilePath() );
+        optionInfo.setLevel( menuLevel );
+
+        options.push_back( optionInfo );
     }
 }

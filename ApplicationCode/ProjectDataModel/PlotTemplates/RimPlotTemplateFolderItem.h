@@ -43,6 +43,9 @@ public:
 
     void createRootFolderItemsFromFolderPaths( const QStringList& folderPaths );
 
+    std::vector<RimPlotTemplateFileItem*>   fileNames() const;
+    std::vector<RimPlotTemplateFolderItem*> subFolders() const;
+
 private:
     void searchForFileAndFolderNames();
     void setFolderPath( const QString& path );

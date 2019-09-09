@@ -33,7 +33,8 @@ public:
     RimPlotTemplateFileItem();
     ~RimPlotTemplateFileItem() override;
 
-    void setFilePath( const QString& filePath );
+    void    setFilePath( const QString& filePath );
+    QString absoluteFilePath() const;
 
 private:
     caf::PdmField<QString> m_absoluteFileName;

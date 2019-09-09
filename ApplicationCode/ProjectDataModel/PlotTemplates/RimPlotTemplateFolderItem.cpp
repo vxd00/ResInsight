@@ -61,6 +61,22 @@ void RimPlotTemplateFolderItem::createRootFolderItemsFromFolderPaths( const QStr
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+std::vector<RimPlotTemplateFileItem*> RimPlotTemplateFolderItem::fileNames() const
+{
+    return m_fileNames.childObjects();
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+std::vector<RimPlotTemplateFolderItem*> RimPlotTemplateFolderItem::subFolders() const
+{
+    return m_subFolders.childObjects();
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 void RimPlotTemplateFolderItem::setFolderPath( const QString& path )
 {
     m_folderName.v().setPath( path );
