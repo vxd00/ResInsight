@@ -393,6 +393,12 @@ RiuSummaryCurveDefSelection::RiuSummaryCurveDefSelection()
 
     m_prevCurveCount    = 0;
     m_prevCurveSetCount = 0;
+
+    CAF_PDM_InitFieldNoDefault( &m_selectedTemplates, "SelectedTemplates", "Templates", "", "", "" );
+    m_selectedTemplates.uiCapability()->setAutoAddingOptionFromValue( false );
+    m_selectedTemplates.uiCapability()->setUiLabelPosition( caf::PdmUiItemInfo::HIDDEN );
+    m_selectedTemplates.uiCapability()->setUiEditorTypeName( caf::PdmUiTreeSelectionEditor::uiEditorTypeName() );
+    m_selectedTemplates.uiCapability()->setUiLabelPosition( caf::PdmUiItemInfo::HIDDEN );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -749,7 +755,14 @@ QList<caf::PdmOptionItemInfo>
     {
         appendOptionItemsForCategories( options );
     }
-    else if ( fieldNeedingOptions == &m_currentSummaryCategory )
+    else if ( fieldNeedingOptions == &m_selectedTemplates )
+    {
+        auto plotTemplateRoot = RiaApplication::instance()->project()->rootPlotTemlateItem();
+        options.push_back( caf::PdmOptionItemInfo::createHeader( "Templates5", true ) );
+
+        appendOptionItemsForPlotTemplates( options, plotTemplateRoot, 0 );
+    }
+    else
     {
         // Lookup item type input field
         auto identifierAndField = lookupIdentifierAndFieldFromFieldHandle( fieldNeedingOptions );
@@ -911,6 +924,11 @@ void RiuSummaryCurveDefSelection::defineUiOrdering( QString uiConfigName, caf::P
     if ( summaryiesField )
     {
         summariesGroup->add( summaryiesField );
+    }
+
+    {
+        caf::PdmUiGroup* group = uiOrdering.addNewGroupWithKeyword( "Templates", "Templates" );
+        group->add( &m_selectedTemplates );
     }
 
     uiOrdering.skipRemainingFields( true );
@@ -1504,8 +1522,8 @@ void RiuSummaryCurveDefSelection::appendOptionItemsForPlotTemplates( QList<caf::
     auto files = templateFolderItem->fileNames();
     for ( auto file : files )
     {
-        const QString          templatePrefix = "$TEMPLATE|";
-        caf::PdmOptionItemInfo optionInfo( file->uiName(), templatePrefix + file->absoluteFilePath() );
+        caf::PdmOptionItemInfo optionInfo( file->uiName(), file );
+
         optionInfo.setLevel( menuLevel );
 
         options.push_back( optionInfo );

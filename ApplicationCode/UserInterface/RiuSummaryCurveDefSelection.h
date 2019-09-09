@@ -134,4 +134,6 @@ private:
 
     size_t m_prevCurveCount;
     size_t m_prevCurveSetCount;
+
+    caf::PdmPtrArrayField<RimPlotTemplateFileItem*> m_selectedTemplates;
 };

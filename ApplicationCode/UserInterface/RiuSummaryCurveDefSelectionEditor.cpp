@@ -93,7 +93,7 @@ void RiuSummaryCurveDefSelectionEditor::recursivelyConfigureAndUpdateTopLevelUiO
 
             // Add group boxes until summaries are detected
 
-            if ( group->keyword() == RiuSummaryCurveDefinitionKeywords::summaries() ) break;
+            // if ( group->keyword() == RiuSummaryCurveDefinitionKeywords::summaries() ) break;
         }
     }
 }
