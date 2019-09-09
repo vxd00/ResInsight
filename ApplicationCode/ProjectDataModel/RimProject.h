@@ -174,6 +174,8 @@ public:
     RiaEclipseUnitTools::UnitSystemType commonUnitSystemForAllCases() const;
     RimMeasurement*                     measurement() const;
 
+    RimPlotTemplateFolderItem* rootPlotTemlateItem() const;
+
 protected:
     // Overridden methods
     void initAfterRead() override;

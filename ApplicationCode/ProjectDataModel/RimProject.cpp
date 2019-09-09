@@ -1174,6 +1174,14 @@ RimMeasurement* RimProject::measurement() const
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+RimPlotTemplateFolderItem* RimProject::rootPlotTemlateItem() const
+{
+    return m_plotTemplateFolderItem;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 void RimProject::reloadCompletionTypeResultsForEclipseCase( RimEclipseCase* eclipseCase )
 {
     std::vector<Rim3dView*> views = eclipseCase->views();

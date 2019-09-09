@@ -21,6 +21,7 @@
 #include "cafCmdFeature.h"
 
 class RimSummaryCase;
+class RimWellPath;
 
 //==================================================================================================
 ///
@@ -38,5 +39,9 @@ protected:
     void setupActionLook( QAction* actionToSetup ) override;
 
 private:
+    RimSummaryPlot* createPlotFromTemplateFile( const QString& fileName ) const;
+
+private:
     std::vector<RimSummaryCase*> selectedSummaryCases() const;
+    std::vector<RimWellPath*>    selectedWellPaths() const;
 };
