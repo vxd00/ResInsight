@@ -758,7 +758,6 @@ QList<caf::PdmOptionItemInfo>
     else if ( fieldNeedingOptions == &m_selectedTemplates )
     {
         auto plotTemplateRoot = RiaApplication::instance()->project()->rootPlotTemlateItem();
-        options.push_back( caf::PdmOptionItemInfo::createHeader( "Templates5", true ) );
 
         appendOptionItemsForPlotTemplates( options, plotTemplateRoot, 0 );
     }
@@ -919,16 +918,19 @@ void RiuSummaryCurveDefSelection::defineUiOrdering( QString uiConfigName, caf::P
         summaryiesField = m_identifierFieldsMap[RifEclipseSummaryAddress::SUMMARY_IMPORTED][0]->pdmField();
     }
 
-    caf::PdmUiGroup* summariesGroup = uiOrdering.addNewGroupWithKeyword( "Summaries",
+    {
+        caf::PdmUiGroup* outerGroup = uiOrdering.addNewGroupWithKeyword( "Vectors and Templates",
                                                                          RiuSummaryCurveDefinitionKeywords::summaries() );
-    if ( summaryiesField )
-    {
-        summariesGroup->add( summaryiesField );
-    }
 
-    {
-        caf::PdmUiGroup* group = uiOrdering.addNewGroupWithKeyword( "Templates", "Templates" );
-        group->add( &m_selectedTemplates );
+        {
+            caf::PdmUiGroup* group = outerGroup->addNewGroup( "Summaries" );
+            group->add( summaryiesField );
+        }
+
+        {
+            caf::PdmUiGroup* group = outerGroup->addNewGroup( "Templates" );
+            group->add( &m_selectedTemplates );
+        }
     }
 
     uiOrdering.skipRemainingFields( true );
@@ -1512,7 +1514,7 @@ void RiuSummaryCurveDefSelection::appendOptionItemsForPlotTemplates( QList<caf::
         for ( auto sub : subFolders )
         {
             caf::PdmOptionItemInfo optionInfo = caf::PdmOptionItemInfo::createHeader( sub->uiName(), true );
-            optionInfo.setLevel( menuLevel + 1 );
+            optionInfo.setLevel( menuLevel );
             options.push_back( optionInfo );
 
             appendOptionItemsForPlotTemplates( options, sub, menuLevel + 1 );
