@@ -62,7 +62,10 @@ RicSummaryCurveCreatorDialog::~RicSummaryCurveCreatorDialog() {}
 void RicSummaryCurveCreatorDialog::updateFromSummaryPlot( RimSummaryPlot* summaryPlot )
 {
     m_curveCreatorSplitterUi->updateFromSummaryPlot( summaryPlot );
-    m_curveCreatorSplitterUi->updateUi();
+
+    // As the uiConfigName is cached in an editor handle, it is required to set the uiConfigName back to empty string
+    m_curveCreatorSplitterUi->updateUi( "ForceGroupCollapseState" );
+    m_curveCreatorSplitterUi->updateUi( "" );
 }
 
 //--------------------------------------------------------------------------------------------------

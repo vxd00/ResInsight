@@ -610,6 +610,19 @@ void RiuSummaryCurveDefSelection::setDefaultSelection( const std::vector<Summary
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+void RiuSummaryCurveDefSelection::setPlotTemplate( RimPlotTemplateFileItem* plotTemplate )
+{
+    m_selectedTemplates.clear();
+
+    if ( plotTemplate )
+    {
+        m_selectedTemplates.push_back( plotTemplate );
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 void RiuSummaryCurveDefSelection::setSelectedCurveDefinitions( const std::vector<RiaSummaryCurveDefinition>& curveDefinitions )
 {
     resetAllFields();
@@ -921,14 +934,21 @@ void RiuSummaryCurveDefSelection::defineUiOrdering( QString uiConfigName, caf::P
     {
         caf::PdmUiGroup* outerGroup = uiOrdering.addNewGroupWithKeyword( "Vectors and Templates",
                                                                          RiuSummaryCurveDefinitionKeywords::summaries() );
-
         {
             caf::PdmUiGroup* group = outerGroup->addNewGroup( "Summaries" );
+            if ( uiConfigName == "ForceGroupCollapseState" )
+            {
+                group->setCollapsed( !m_selectedTemplates.empty() );
+            }
             group->add( summaryiesField );
         }
 
         {
             caf::PdmUiGroup* group = outerGroup->addNewGroup( "Templates" );
+            if ( uiConfigName == "ForceGroupCollapseState" )
+            {
+                group->setCollapsed( m_selectedTemplates.empty() );
+            }
             group->add( &m_selectedTemplates );
         }
     }

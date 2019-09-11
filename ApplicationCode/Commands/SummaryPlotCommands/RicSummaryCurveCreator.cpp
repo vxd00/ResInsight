@@ -330,7 +330,7 @@ void RicSummaryCurveCreator::defineUiOrdering( QString uiConfigName, caf::PdmUiO
 
     syncPreviewCurvesFromUiSelection();
 
-    m_summaryCurveSelectionEditor->updateUi();
+    m_summaryCurveSelectionEditor->updateUi( uiConfigName );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -620,6 +620,7 @@ void RicSummaryCurveCreator::populateCurveCreator( const RimSummaryPlot& sourceS
     m_previewPlot->updateAxes();
 
     m_summaryCurveSelectionEditor->summaryAddressSelection()->setSelectedCurveDefinitions( curveDefs );
+    m_summaryCurveSelectionEditor->summaryAddressSelection()->setPlotTemplate( sourceSummaryPlot.plotTemplate() );
 
     updateAppearanceEditor();
 }

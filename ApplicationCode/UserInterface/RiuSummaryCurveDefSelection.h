@@ -67,6 +67,8 @@ public:
 
     void setDefaultSelection( const std::vector<SummarySource*>& defaultCases );
 
+    void setPlotTemplate( RimPlotTemplateFileItem* plotTemplate );
+
 private:
     void                          fieldChangedByUi( const caf::PdmFieldHandle* changedField,
                                                     const QVariant&            oldValue,
