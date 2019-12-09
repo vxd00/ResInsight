@@ -16,18 +16,18 @@ from os import walk
 
 _resinsight_width = 1000
 _resinsight_height = 600
-_default_arguments = ['--snapshotsize', _resinsight_width, _resinsight_height, '--savesnapshots', 'all']
+_default_arguments = ['--snapshotsize', _resinsight_width, _resinsight_height, '--savesnapshots', 'all noexit']
 
 # set this environment variable to the regression test root, ie "d:/gitroot-ceesol/ResInsight-regression-test"
 _regtest_root_folder = os.environ.get('RESINSIGHT_REG_TEST_ROOT')
-#_regtest_root_folder = "d:/gitroot-ceesol/ResInsight-regression-test"
 
 def launch_resinsight(testRootFolder, command_line_parameters):
-    resinsight = rips.Instance.launch(command_line_parameters=command_line_parameters)
+    command_line_test_port = 50060
 
-    resinsight.project.close()
+    # make sure the resinsight instance is kept alive after the command line options have been processed
+    # snapshot from command line has option 'noexit' to make sure ResInsight is not closed down after snapshot
+    resinsight = rips.Instance.launch(command_line_parameters=command_line_parameters, launch_port=command_line_test_port)
     resinsight.exit()
-
 
 def compareImages(testRootFolder):
     export_folder = testRootFolder + "/RegTestGeneratedImages"
@@ -59,8 +59,6 @@ def compareImages(testRootFolder):
 
             diff_image_file_name = diff_folder + '/' + fileName
             cv2.imwrite(diff_image_file_name, difference)
-        
-
 
 @pytest.mark.skipif(not _regtest_root_folder, reason="missing environment variable _regtest_root_folder")
 def test_import_summary_case():
@@ -71,7 +69,6 @@ def test_import_summary_case():
     export_folder = testRootFolder + "/RegTestGeneratedImages"
     launch_resinsight(testRootFolder, _default_arguments + ['--summaryplot', 'FOPT', casePath, '--snapshotfolder', export_folder])
     compareImages(testRootFolder)
-
 
 @pytest.mark.skipif(not _regtest_root_folder, reason="missing environment variable _regtest_root_folder")
 def test_default_view():
