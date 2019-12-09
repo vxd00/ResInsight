@@ -807,8 +807,9 @@ RiaApplication::ApplicationStatus RiaGuiApplication::handleArguments( cvf::Progr
 
     if ( cvf::Option o = progOpt->option( "savesnapshots" ) )
     {
-        bool snapshotViews = false;
-        bool snapshotPlots = false;
+        bool snapshotViews      = false;
+        bool snapshotPlots      = false;
+        bool exitAfterSnapshots = true;
 
         QStringList snapshotItemTexts = cvfqt::Utils::toQStringList( o.values() );
         if ( snapshotItemTexts.empty() )
@@ -831,6 +832,10 @@ RiaApplication::ApplicationStatus RiaGuiApplication::handleArguments( cvf::Progr
             else if ( s.toLower() == "plots" )
             {
                 snapshotPlots = true;
+            }
+            else if ( s.toLower() == "noexit" )
+            {
+                exitAfterSnapshots = false;
             }
         }
 
@@ -890,7 +895,14 @@ RiaApplication::ApplicationStatus RiaGuiApplication::handleArguments( cvf::Progr
 
         closeProject();
 
-        return EXIT_COMPLETED;
+        if ( exitAfterSnapshots )
+        {
+            return EXIT_COMPLETED;
+        }
+        else
+        {
+            return KEEP_GOING;
+        }
     }
 
     if ( cvf::Option o = progOpt->option( "commandFile" ) )
