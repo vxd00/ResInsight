@@ -34,8 +34,16 @@ def compareImages(testRootFolder):
     base_folder = testRootFolder + "/RegTestBaseImages"
     diff_folder = testRootFolder + "/RegTestDiffImages"
 
+    if not os.path.exists(diff_folder):
+        os.makedirs(diff_folder)
+        print("Directory " , diff_folder ,  " Created ")
+
+    if not os.path.exists(export_folder):
+        os.makedirs(export_folder)
+        print("Directory " , export_folder ,  " Created ")
+
     generatedFileNames = []
-    for (dirpath, dirnames, filenames) in walk(export_folder):
+    for (dirpath, dirnames, filenames) in walk(base_folder):
         generatedFileNames.extend(filenames)
         break
 
@@ -45,6 +53,7 @@ def compareImages(testRootFolder):
 
         base_image_file_name = base_folder + '/' + fileName
         base_image = cv2.imread(base_image_file_name)
+
 
         # todo : check if images has same size
         if True:
