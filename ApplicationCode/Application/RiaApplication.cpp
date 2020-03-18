@@ -1806,6 +1806,90 @@ bool RiaApplication::generateCode( const QString& fileName, QString* errMsg )
 
             out << caf::PdmMarkdownBuilder::generateDocCommandObjects( commandObjects );
         }
+
+        // Generate config file for pydocmd
+        {
+            QString outputFileName = dir.absoluteFilePath( "pydocmd.yml" );
+
+            QFile outputFile( outputFileName );
+            if ( !outputFile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+            {
+                *errMsg = QString( "Could not open file %1 for writing" ).arg( outputFileName );
+                return false;
+            }
+            QTextStream out( &outputFile );
+
+            QString commandString1 = R"(
+site_name: "My Documentation"
+
+# This tells pydocmd which pages to generate from which Python modules,
+# functions and classes. At the first level is the page name, below that
+# is a tree of Python member names (modules, classes, etc.) that should be
+# documented. Higher indentation leads to smaller header size.
+generate:
+)";
+            out << commandString1;
+
+            std::vector<std::shared_ptr<const caf::PdmObject>> dummyObjects;
+
+            auto allObjects = caf::PdmMarkdownBuilder::createAllObjects( caf::PdmDefaultObjectFactory::instance() );
+            for ( auto classObject : allObjects )
+            {
+                if ( caf::PdmObjectScriptabilityRegister::isScriptable( classObject.get() ) )
+                {
+                    dummyObjects.push_back( classObject );
+                }
+            }
+
+            QString classesToGenerate;
+            for ( auto o : dummyObjects )
+            {
+                auto    classKeyword = o->classKeyword();
+                QString scriptClassName =
+                    caf::PdmObjectScriptabilityRegister::scriptClassNameFromClassKeyword( classKeyword );
+
+                out << "- " + scriptClassName + ".md:\n";
+                out << "  - rips." + scriptClassName + "+\n";
+            }
+
+            QString commandString = R"(
+
+# MkDocs pages configuration. The `<<` operator is sugar added by pydocmd
+# that allows you to use an external Markdown file (eg. your project's README)
+# in the documentation. The path must be relative to current working directory.
+# This configuration is not mandatory if you have your own mkdocs.yml config file.
+pages:
+- API:
+  - view: view.md
+  - case: case.md
+  - all: all.md
+
+# These options all show off their default values. You don't have to add
+# them to your configuration if you're fine with the default.
+docs_dir: sources
+gens_dir: _build/pydocmd     # This will end up as the MkDocs 'docs_dir'
+site_dir: _build/site
+theme:    readthedocs
+loader:   pydocmd.loader.PythonLoader
+preprocessor: pydocmd.preprocessors.simple.Preprocessor
+
+# Whether to output headers as markdown or HTML.  Used to workaround
+# https://github.com/NiklasRosenstein/pydoc-markdown/issues/11.  The default is
+# to generate HTML with unique and meaningful id tags, which can't be done with
+# markdown.
+#
+# Note: if using the simple generator mode, this will default to 'markdown'
+# instead of 'html'.
+headers: markdown
+
+# Additional search path for your Python module. If you use Pydocmd from a
+# subdirectory of your project (eg. docs/), you may want to add the parent
+# directory here.
+additional_search_paths:
+- ..    )";
+
+            out << commandString;
+        }
     }
     else
     {
