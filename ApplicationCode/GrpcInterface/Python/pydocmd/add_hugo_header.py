@@ -10,5 +10,8 @@ for f in files:
      s = file_object.read()
      file_object.seek(0)
      
-     header_text = "+++\ntitle = \"" + f + "\"\npublished = true\n+++\n\n"
+     # generated markdown file is like "pyEclipseCase.md" Remove first two and last three to get class name
+     class_name = f[2:-3]
+     
+     header_text = "+++\ntitle = \"" + class_name + "\"\npublished = true\n+++\n\n"
      file_object.write( header_text + s)
