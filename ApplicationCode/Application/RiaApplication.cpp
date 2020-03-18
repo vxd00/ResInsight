@@ -1841,14 +1841,17 @@ generate:
                 }
             }
 
-            QString classesToGenerate;
+            std::set<QString> classesToGenerate;
             for ( auto o : dummyObjects )
             {
                 auto    classKeyword = o->classKeyword();
                 QString scriptClassName =
                     caf::PdmObjectScriptabilityRegister::scriptClassNameFromClassKeyword( classKeyword );
-
-                out << "- " + scriptClassName + ".md:\n";
+                classesToGenerate.insert( scriptClassName );
+            }
+            for ( auto scriptClassName : classesToGenerate )
+            {
+                out << "- py" + scriptClassName + ".md:\n";
                 out << "  - rips." + scriptClassName + "+\n";
             }
 
@@ -1871,7 +1874,7 @@ gens_dir: _build/pydocmd     # This will end up as the MkDocs 'docs_dir'
 site_dir: _build/site
 theme:    readthedocs
 loader:   pydocmd.loader.PythonLoader
-preprocessor: pydocmd.preprocessors.simple.Preprocessor
+preprocessor: pydocmd.preprocessors.google.Preprocessor
 
 # Whether to output headers as markdown or HTML.  Used to workaround
 # https://github.com/NiklasRosenstein/pydoc-markdown/issues/11.  The default is
