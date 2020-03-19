@@ -1809,7 +1809,7 @@ bool RiaApplication::generateCode( const QString& fileName, QString* errMsg )
 
         // Generate config file for pydocmd
         {
-            QString outputFileName = dir.absoluteFilePath( "pydocmd.yml" );
+            QString outputFileName = dir.absoluteFilePath( "ri-pydocmd.yml" );
 
             QFile outputFile( outputFileName );
             if ( !outputFile.open( QIODevice::WriteOnly | QIODevice::Text ) )
