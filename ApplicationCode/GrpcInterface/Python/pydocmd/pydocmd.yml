@@ -32,6 +32,8 @@ generate:
   - rips.GridCaseGroup+
 - pyGridSummaryCase.md:
   - rips.GridSummaryCase+
+- pyInstance.md:
+  - rips.Instance+
 - pyModeledWellPath.md:
   - rips.ModeledWellPath+
 - pyPlot.md:

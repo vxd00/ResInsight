@@ -1857,6 +1857,10 @@ generate:
                     if ( !candidate.isEmpty() ) classesToGenerate.insert( candidate );
                 }
             }
+
+            // manually add instance, as this is a handcoded class
+            classesToGenerate.insert( "Instance" );
+
             for ( auto scriptClassName : classesToGenerate )
             {
                 out << "- py" + scriptClassName + ".md:\n";
