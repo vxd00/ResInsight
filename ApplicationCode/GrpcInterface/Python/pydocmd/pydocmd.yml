@@ -6,6 +6,8 @@ site_name: "My Documentation"
 # is a tree of Python member names (modules, classes, etc.) that should be
 # documented. Higher indentation leads to smaller header size.
 generate:
+- pyCase.md:
+  - rips.Case+
 - pyCellColors.md:
   - rips.CellColors+
 - pyEclipseCase.md:
@@ -32,14 +34,26 @@ generate:
   - rips.GridSummaryCase+
 - pyModeledWellPath.md:
   - rips.ModeledWellPath+
+- pyPlot.md:
+  - rips.Plot+
+- pyPlotWindow.md:
+  - rips.PlotWindow+
 - pyProject.md:
   - rips.Project+
+- pyReservoir.md:
+  - rips.Reservoir+
 - pySimulationWell.md:
   - rips.SimulationWell+
+- pySummaryCase.md:
+  - rips.SummaryCase+
 - pySummaryPlot.md:
   - rips.SummaryPlot+
 - pySummaryPlotCollection.md:
   - rips.SummaryPlotCollection+
+- pyView.md:
+  - rips.View+
+- pyViewWindow.md:
+  - rips.ViewWindow+
 - pyWbsParameters.md:
   - rips.WbsParameters+
 - pyWellBoreStabilityPlot.md:

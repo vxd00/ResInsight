@@ -1848,6 +1848,14 @@ generate:
                 QString scriptClassName =
                     caf::PdmObjectScriptabilityRegister::scriptClassNameFromClassKeyword( classKeyword );
                 classesToGenerate.insert( scriptClassName );
+
+                auto stack = o->classInheritanceStack();
+                for ( auto iter = stack.rbegin(); iter != stack.rend(); iter++ )
+                {
+                    auto candidate = caf::PdmObjectScriptabilityRegister::scriptClassNameFromClassKeyword( *iter );
+                    if ( candidate.contains( "pdmobject", Qt::CaseInsensitive ) ) continue;
+                    if ( !candidate.isEmpty() ) classesToGenerate.insert( candidate );
+                }
             }
             for ( auto scriptClassName : classesToGenerate )
             {
