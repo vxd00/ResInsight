@@ -1,0 +1,2 @@
+/* #undef HAS_ATTRIBUTE_UNUSED */
+#define HAVE_DYNAMIC_BOOST_TEST 0
