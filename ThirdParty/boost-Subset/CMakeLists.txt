@@ -25,6 +25,8 @@ include_directories(
  
 add_library( ${PROJECT_NAME} 
     libs/filesystem/src/codecvt_error_category.cpp 
+    libs/filesystem/src/directory.cpp
+    libs/filesystem/src/exception.cpp
     libs/filesystem/src/operations.cpp 
     libs/filesystem/src/path.cpp 
     libs/filesystem/src/path_traits.cpp 
