@@ -21,12 +21,6 @@ endif(MSVC)
 
 project (custom-opm-common)
 
-# Unity Build
-if (RESINSIGHT_ENABLE_UNITY_BUILD)
-  message("Cmake Unity build is enabled on : ${PROJECT_NAME}")
-  set(CMAKE_UNITY_BUILD true)
-endif()
-
 
 include_directories(
     opm-common
