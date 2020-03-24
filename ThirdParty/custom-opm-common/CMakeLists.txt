@@ -59,7 +59,7 @@ endforeach()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
-    list(APPEND ${project}_LIBRARIES stdc++fs)
+    list(APPEND ADDITIONAL_LINK_LIBRARIES stdc++fs)
   endif()
 endif()
 
@@ -77,7 +77,7 @@ add_library(${PROJECT_NAME}
 
 target_link_libraries(custom-opm-common 
   boost-Subset
-  ${project}_LIBRARIES
+  ${ADDITIONAL_LINK_LIBRARIES}
 )
 target_include_directories(custom-opm-common 
   PUBLIC
