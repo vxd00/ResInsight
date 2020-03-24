@@ -57,6 +57,12 @@ foreach (name A B C D E F G H I J K L M N O P Q R S T U V W X Y Z)
     list(INSERT opm-common_SOURCES 0 generated-opm-common/ParserKeywords/${name}.cpp)
 endforeach()
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    list(APPEND ${project}_LIBRARIES stdc++fs)
+  endif()
+endif()
+
 add_library(${PROJECT_NAME} 
     STATIC
 	${opm_parser_source_files_long_path}
@@ -71,6 +77,7 @@ add_library(${PROJECT_NAME}
 
 target_link_libraries(custom-opm-common 
   boost-Subset
+  ${project}_LIBRARIES
 )
 target_include_directories(custom-opm-common 
   PUBLIC
