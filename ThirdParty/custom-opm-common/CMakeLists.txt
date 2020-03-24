@@ -77,6 +77,8 @@ add_library(${PROJECT_NAME}
     # Required for use of static function RstConnection::inverse_peaceman
     opm-common/src/opm/io/eclipse/rst/connection.cpp
 
+    # Required for use of RstHeader::restart_info
+    opm-common/src/opm/io/eclipse/rst/header.cpp
 )
 
 target_link_libraries(custom-opm-common 
