@@ -144,6 +144,13 @@ void AppEnum<RimSimWellInViewCollection::WellDiskPropertyConfigType>::setUp()
     addItem( RimSimWellInViewCollection::INJECTION_RATES, "INJECTION_RATES", "Injection Rates" );
     addItem( RimSimWellInViewCollection::CUMULATIVE_PRODUCTION_RATES, "CUMULATIVE_PRODUCTION_RATES", "Production Total" );
     addItem( RimSimWellInViewCollection::CUMULATIVE_INJECTION_RATES, "CUMULATIVE_INJECTION_RATES", "Injection Total" );
+    addItem( RimSimWellInViewCollection::PRODUCTION_INJECTION_RATES,
+             "PRODUCTION_INJECTION_RATES",
+             "Production/Injection Rates" );
+    addItem( RimSimWellInViewCollection::CUMULATIVE_PRODUCTION_INJECTION_RATES,
+             "CUMULATIVE_PRODUCTION_INJECTION_RATES",
+             "Production/Injection Total" );
+
     setDefault( RimSimWellInViewCollection::PRODUCTION_RATES );
 }
 } // namespace caf
@@ -267,6 +274,8 @@ RimSimWellInViewCollection::RimSimWellInViewCollection()
                        "",
                        "" );
     CAF_PDM_InitField( &m_wellDiskScaleFactor, "WellDiskScaleFactor", 1.0, "Scale Factor", "", "", "" );
+    cvf::Color3f defaultWellDiskColor = cvf::Color3::OLIVE;
+    CAF_PDM_InitField( &wellDiskColor, "WellDiskColor", defaultWellDiskColor, "Well Disk Color", "", "", "" );
 
     CAF_PDM_InitField( &obsoleteField_wellPipeVisibility,
                        "GlobalWellPipeVisibility",
@@ -480,11 +489,27 @@ void RimSimWellInViewCollection::fieldChangedByUi( const caf::PdmFieldHandle* ch
         }
     }
 
+    if ( &wellDiskColor == changedField )
+    {
+        for ( RimSimWellInView* w : wells )
+        {
+            w->wellDiskColor = wellDiskColor;
+            w->updateConnectedEditors();
+        }
+    }
+
     if ( m_reservoirView )
     {
+        if ( !m_wellDiskSummaryCase() )
+        {
+            setDefaultSourceCaseForWellDisks();
+        }
+
         if ( &isActive == changedField || &m_showWellLabel == changedField || &m_showWellCells == changedField ||
              &m_showWellCellFence == changedField || &wellCellFenceType == changedField )
         {
+            RimWellDiskConfig wellDiskConfig = getActiveWellDiskConfig();
+            updateWellDisks( wellDiskConfig );
             m_reservoirView->scheduleGeometryRegen( VISIBLE_WELL_CELLS );
             m_reservoirView->scheduleCreateDisplayModelAndRedraw();
         }
@@ -495,14 +520,15 @@ void RimSimWellInViewCollection::fieldChangedByUi( const caf::PdmFieldHandle* ch
         else if ( &m_wellDiskQuantity == changedField || &m_wellDiskPropertyType == changedField ||
                   &m_wellDiskPropertyConfigType == changedField || &m_wellDiskshowLabelsBackground == changedField ||
                   &m_wellDiskShowQuantityLabels == changedField || &m_wellDiskSummaryCase == changedField ||
-                  &m_wellDiskScaleFactor == changedField )
+                  &m_wellDiskScaleFactor == changedField || &m_showWellDisks == changedField ||
+                  &wellDiskColor == changedField )
         {
             RimWellDiskConfig wellDiskConfig = getActiveWellDiskConfig();
             updateWellDisks( wellDiskConfig );
             m_reservoirView->updateDisplayModelForCurrentTimeStepAndRedraw();
         }
         else if ( &spheresScaleFactor == changedField || &m_showWellSpheres == changedField ||
-                  &m_showWellDisks == changedField || &showConnectionStatusColors == changedField )
+                  &showConnectionStatusColors == changedField )
         {
             m_reservoirView->scheduleSimWellGeometryRegen();
             m_reservoirView->scheduleCreateDisplayModelAndRedraw();
@@ -769,6 +795,10 @@ void RimSimWellInViewCollection::defineUiOrdering( QString uiConfigName, caf::Pd
         wellDiskGroup->add( &m_wellDiskShowQuantityLabels );
         wellDiskGroup->add( &m_wellDiskshowLabelsBackground );
         wellDiskGroup->add( &m_wellDiskScaleFactor );
+        if ( m_wellDiskPropertyType() == PROPERTY_TYPE_SINGLE )
+        {
+            wellDiskGroup->add( &wellDiskColor );
+        }
 
         bool isReadOnly = m_showWellDisks().isFalse();
 
@@ -779,6 +809,7 @@ void RimSimWellInViewCollection::defineUiOrdering( QString uiConfigName, caf::Pd
         m_wellDiskShowQuantityLabels.uiCapability()->setUiReadOnly( isReadOnly );
         m_wellDiskshowLabelsBackground.uiCapability()->setUiReadOnly( isReadOnly );
         m_wellDiskScaleFactor.uiCapability()->setUiReadOnly( isReadOnly );
+        wellDiskColor.uiCapability()->setUiReadOnly( isReadOnly );
     }
 
     RimEclipseResultCase* ownerCase = nullptr;
@@ -1103,6 +1134,18 @@ RimWellDiskConfig RimSimWellInViewCollection::getActiveWellDiskConfig() const
             wellDiskConfig.setOilProperty( "" );
             wellDiskConfig.setGasProperty( "WGIT" );
             wellDiskConfig.setWaterProperty( "WWIT" );
+        }
+        else if ( configType == PRODUCTION_INJECTION_RATES )
+        {
+            wellDiskConfig.setOilProperty( "WOPR", "" );
+            wellDiskConfig.setGasProperty( "WGPR", "WGIR" );
+            wellDiskConfig.setWaterProperty( "WWPR", "WWIR" );
+        }
+        else if ( configType == CUMULATIVE_PRODUCTION_INJECTION_RATES )
+        {
+            wellDiskConfig.setOilProperty( "WOPT", "" );
+            wellDiskConfig.setGasProperty( "WGPT", "WGIT" );
+            wellDiskConfig.setWaterProperty( "WWPT", "WWIT" );
         }
     }
     else

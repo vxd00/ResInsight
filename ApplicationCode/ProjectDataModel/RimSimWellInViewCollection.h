@@ -105,7 +105,9 @@ public:
         PRODUCTION_RATES,
         INJECTION_RATES,
         CUMULATIVE_PRODUCTION_RATES,
-        CUMULATIVE_INJECTION_RATES
+        CUMULATIVE_INJECTION_RATES,
+        PRODUCTION_INJECTION_RATES,
+        CUMULATIVE_PRODUCTION_INJECTION_RATES
     };
 
     typedef caf::AppEnum<RimSimWellInViewCollection::WellPipeColors> WellPipeColorsEnum;
@@ -158,6 +160,8 @@ public:
     void   setDefaultSourceCaseForWellDisks();
     void   updateWellDisks();
     double wellDiskScaleFactor() const;
+
+    caf::PdmField<cvf::Color3f> wellDiskColor;
 
 protected:
     void fieldChangedByUi( const caf::PdmFieldHandle* changedField, const QVariant& oldValue, const QVariant& newValue ) override;

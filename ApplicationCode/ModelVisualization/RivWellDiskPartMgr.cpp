@@ -57,6 +57,8 @@
 #include "cvfUniform.h"
 #include "cvfqtUtils.h"
 
+#include <cmath>
+
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
@@ -130,7 +132,7 @@ void RivWellDiskPartMgr::buildWellDiskParts( size_t frameIndex, const caf::Displ
         cvf::GeometryBuilderFaceList builder;
         {
             RivDiskGeometryGenerator gen;
-            gen.setRelativeRadius( 2.5f * ( m_rimWell->diskScale() ) );
+            gen.setRelativeRadius( baseScaleFactor() * m_rimWell->diskScale() );
             gen.setRelativeLength( 0.1f );
             gen.setNumSlices( numSectors );
             gen.generate( &builder );
@@ -181,9 +183,9 @@ void RivWellDiskPartMgr::buildWellDiskParts( size_t frameIndex, const caf::Displ
 
     cvf::ref<cvf::Effect> effectToUse = RiaGuiApplication::instance()->useShaders() ? m_shaderEffect : m_fixedFuncEffect;
 
-    const cvf::Color3ub colorTable[] = {cvf::Color3ub( cvf::Color3::DARK_GREEN ),
-                                        cvf::Color3ub( cvf::Color3::DARK_RED ),
-                                        cvf::Color3ub( cvf::Color3::DARK_BLUE )};
+    const cvf::Color3ub colorTable[] = {cvf::Color3ub( 0, 177, 89 ), // Green
+                                        cvf::Color3ub( 255, 66, 66 ), // Red
+                                        cvf::Color3ub( 66, 66, 255 )}; // Blue
 
     size_t                       vertexCount = geo1->vertexCount();
     cvf::ref<cvf::Color3ubArray> colorArray  = new cvf::Color3ubArray;
@@ -193,19 +195,22 @@ void RivWellDiskPartMgr::buildWellDiskParts( size_t frameIndex, const caf::Displ
 
     std::vector<std::pair<cvf::String, cvf::Vec3f>> labelsWithPosition;
 
-    int numberPrecision = 2;
-
     double       accumulatedPropertyValue = 0.0;
     const double valueThresholdForLabel   = 1e-6;
 
-    QString         labelText = m_rimWell->name();
-    RigWellDiskData diskData  = m_rimWell->wellDiskData();
+    QString labelText;
+    if ( m_rimWell->showWellLabel() )
+    {
+        labelText = m_rimWell->name();
+    }
+
+    RigWellDiskData diskData = m_rimWell->wellDiskData();
     if ( diskData.isSingleProperty() )
     {
         // Set color for the triangle vertices
+        cvf::Color3ub c = cvf::Color3ub( m_rimWell->wellDiskColor );
         for ( size_t i = 0; i < numSectors * 3; i++ )
         {
-            cvf::Color3ub c = cvf::Color3::OLIVE;
             colorArray->set( i, c );
         }
 
@@ -216,7 +221,7 @@ void RivWellDiskPartMgr::buildWellDiskParts( size_t frameIndex, const caf::Displ
             if ( diskData.singlePropertyValue() > valueThresholdForLabel )
             {
                 const double singleProperty = diskData.singlePropertyValueSigned();
-                labelText += QString( "\n%2" ).arg( singleProperty, 0, 'g', numberPrecision );
+                labelText += QString( "\n%2" ).arg( RivWellDiskPartMgr::formatNumber( singleProperty ) );
             }
         }
     }
@@ -239,11 +244,8 @@ void RivWellDiskPartMgr::buildWellDiskParts( size_t frameIndex, const caf::Displ
 
             if ( oilFraction > valueThresholdForLabel )
             {
-                auto p = createTextAndLocation( oilFraction / 2.0,
-                                                diskPosition,
-                                                ijScaleFactor,
-                                                diskData.oilSigned(),
-                                                numberPrecision );
+                auto p = createTextAndLocation( oilFraction / 2.0, diskPosition, ijScaleFactor, diskData.oilSigned() );
+
                 labelsWithPosition.push_back( p );
                 aggregatedFraction += oilFraction;
             }
@@ -253,8 +255,7 @@ void RivWellDiskPartMgr::buildWellDiskParts( size_t frameIndex, const caf::Displ
                 auto p = createTextAndLocation( aggregatedFraction + gasFraction / 2.0,
                                                 diskPosition,
                                                 ijScaleFactor,
-                                                diskData.gasSigned(),
-                                                numberPrecision );
+                                                diskData.gasSigned() );
                 labelsWithPosition.push_back( p );
                 aggregatedFraction += gasFraction;
             }
@@ -264,8 +265,7 @@ void RivWellDiskPartMgr::buildWellDiskParts( size_t frameIndex, const caf::Displ
                 auto p = createTextAndLocation( aggregatedFraction + waterFraction / 2.0,
                                                 diskPosition,
                                                 ijScaleFactor,
-                                                diskData.waterSigned(),
-                                                numberPrecision );
+                                                diskData.waterSigned() );
 
                 labelsWithPosition.push_back( p );
                 aggregatedFraction += waterFraction;
@@ -362,10 +362,7 @@ void RivWellDiskPartMgr::buildWellDiskParts( size_t frameIndex, const caf::Displ
         }
     }
 
-    bool showTextLabels = simWellInViewCollection()->showWellDiskQuantityLables() ||
-                          ( well->showWellLabel() && well->showWellDisks() && !well->name().isEmpty() );
-
-    if ( showTextLabels )
+    if ( well->showWellDisks() )
     {
         cvf::Font* font = RiaGuiApplication::instance()->defaultWellLabelFont();
 
@@ -385,8 +382,11 @@ void RivWellDiskPartMgr::buildWellDiskParts( size_t frameIndex, const caf::Displ
 
         cvf::String cvfString = cvfqt::Utils::toString( labelText );
 
-        cvf::Vec3f textCoord( textPosition );
-        drawableText->addText( cvfString, textCoord );
+        if ( !cvfString.isEmpty() )
+        {
+            cvf::Vec3f textCoord( textPosition );
+            drawableText->addText( cvfString, textCoord );
+        }
 
         if ( simWellInViewCollection()->showWellDiskQuantityLables() )
         {
@@ -396,17 +396,28 @@ void RivWellDiskPartMgr::buildWellDiskParts( size_t frameIndex, const caf::Displ
             }
         }
 
-        cvf::ref<cvf::Part> part = new cvf::Part;
-        part->setName( "RivWellDiskPartMgr: text " + cvfString );
-        part->setDrawable( drawableText.p() );
+        if ( drawableText->numberOfTexts() > 0 )
+        {
+            cvf::ref<cvf::Part> part = new cvf::Part;
+            part->setName( "RivWellDiskPartMgr: text " + cvfString );
+            part->setDrawable( drawableText.p() );
 
-        cvf::ref<cvf::Effect> eff = new cvf::Effect;
+            cvf::ref<cvf::Effect> eff = new cvf::Effect;
 
-        part->setEffect( eff.p() );
-        part->setPriority( RivPartPriority::PartType::Text );
+            part->setEffect( eff.p() );
+            part->setPriority( RivPartPriority::PartType::Text );
 
-        m_wellDiskLabelPart = part;
+            m_wellDiskLabelPart = part;
+        }
     }
+}
+
+QString RivWellDiskPartMgr::formatNumber( double num )
+{
+    if ( std::fabs( num ) < 1e4 )
+        return QString::number( num, 'f', 1 );
+    else
+        return QString::number( num, 'g', 2 );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -415,22 +426,21 @@ void RivWellDiskPartMgr::buildWellDiskParts( size_t frameIndex, const caf::Displ
 std::pair<cvf::String, cvf::Vec3f> RivWellDiskPartMgr::createTextAndLocation( const double aggregatedFraction,
                                                                               cvf::Vec3d   diskPosition,
                                                                               double       ijScaleFactor,
-                                                                              const double fraction,
-                                                                              int          precision )
+                                                                              const double fraction )
 {
     double sinA = cvf::Math::sin( aggregatedFraction * 2.0 * cvf::PI_F );
     double cosA = cvf::Math::cos( aggregatedFraction * 2.0 * cvf::PI_F );
 
     cvf::Vec3f v = cvf::Vec3f( diskPosition );
 
-    double radius = 2.5f * ( m_rimWell->diskScale() );
+    double radius = baseScaleFactor() * m_rimWell->diskScale();
     radius *= ijScaleFactor;
     radius *= 1.1; // Put label outside the disk
 
     v.x() = v.x() + static_cast<float>( -sinA * radius );
     v.y() = v.y() + static_cast<float>( cosA * radius );
 
-    auto        s    = QString::number( fraction, 'g', precision );
+    auto        s    = RivWellDiskPartMgr::formatNumber( fraction );
     cvf::String text = cvf::String( s.toStdString() );
 
     auto p = std::make_pair( text, v );
@@ -520,4 +530,12 @@ cvf::Color4f RivWellDiskPartMgr::getWellInjectionColor( RigWellResultFrame::Well
     }
 
     return cvf::Color4f( cvf::Color3::BLACK );
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+double RivWellDiskPartMgr::baseScaleFactor()
+{
+    return 10.0;
 }
