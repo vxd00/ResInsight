@@ -25,6 +25,8 @@
 #include <cassert>
 #include <stdexcept>
 
+#include <string>
+
 namespace Opm {
 namespace {
 
@@ -48,6 +50,17 @@ static constexpr double invalid_value = -1.e100;
     {
     }
 
+namespace {
+
+    double if_invalid_value(double rst_value) {
+        if (rst_value == 0)
+            return invalid_value;
+
+        return rst_value;
+    }
+
+}
+
 
     Segment::Segment(const RestartIO::RstSegment& rst_segment):
         m_segment_number(rst_segment.segment),
@@ -55,9 +68,9 @@ static constexpr double invalid_value = -1.e100;
         m_outlet_segment(rst_segment.outlet_segment),
         m_total_length( rst_segment.dist_bhp_ref ),
         m_depth(rst_segment.bhp_ref_dz),
-        m_internal_diameter(rst_segment.diameter),
-        m_roughness(rst_segment.roughness),
-        m_cross_area(rst_segment.area),
+        m_internal_diameter(if_invalid_value(rst_segment.diameter)),
+        m_roughness(if_invalid_value(rst_segment.roughness)),
+        m_cross_area(if_invalid_value(rst_segment.area)),
         m_volume(rst_segment.volume),
         m_data_ready(true),
         m_segment_type(rst_segment.segment_type)
@@ -132,30 +145,6 @@ static constexpr double invalid_value = -1.e100;
     {
     }
 
-    Segment::Segment(int segmentNum, int branchNum, int outletSeg,
-                     const std::vector<int>& inletSegs,
-                     double totalLen, double dept, double internalDiam,
-                     double rough, double crossA, double vol,
-                     bool dr, SegmentType segment,
-                     std::shared_ptr<SpiralICD> spiralIcd,
-                     std::shared_ptr<Valve> valv)
-    : m_segment_number(segmentNum),
-      m_branch(branchNum),
-      m_outlet_segment(outletSeg),
-      m_inlet_segments(inletSegs),
-      m_total_length(totalLen),
-      m_depth(dept),
-      m_internal_diameter(internalDiam),
-      m_roughness(rough),
-      m_cross_area(crossA),
-      m_volume(vol),
-      m_data_ready(dr),
-      m_segment_type(segment),
-      m_spiral_icd(spiralIcd),
-      m_valve(valv)
-  {
-  }
-
   Segment::Segment(const Segment& src, double new_depth, double new_length):
       Segment(src)
   {
@@ -170,12 +159,31 @@ static constexpr double invalid_value = -1.e100;
        this->m_volume = new_volume;
    }
 
-
-
   Segment::Segment(const Segment& src, double new_volume):
       Segment(src)
   {
       this->m_volume = new_volume;
+  }
+
+  Segment Segment::serializeObject()
+  {
+      Segment result;
+      result.m_segment_number = 1;
+      result.m_branch = 2;
+      result.m_outlet_segment = 3;
+      result.m_inlet_segments = {4, 5};
+      result.m_total_length = 6.0;
+      result.m_depth = 7.0;
+      result.m_internal_diameter = 8.0;
+      result.m_roughness = 9.0;
+      result.m_cross_area = 10.0;
+      result.m_volume = 11.0;
+      result.m_data_ready = true;
+      result.m_segment_type = SegmentType::SICD;
+      result.m_spiral_icd = std::make_shared<SpiralICD>(SpiralICD::serializeObject());
+      result.m_valve = std::make_shared<Valve>(Valve::serializeObject());
+
+      return result;
   }
 
     int Segment::segmentNumber() const {
@@ -334,7 +342,7 @@ static constexpr double invalid_value = -1.e100;
         case -5:
             return SegmentType::VALVE;
         default:
-            throw std::invalid_argument("Unhanedled segment type");
+            throw std::invalid_argument("Unhandeled segment type: " + std::to_string(ecl_id));
         }
     }
 }

@@ -18,9 +18,9 @@
  */
 
 #define BOOST_TEST_MODULE ParserKeywordsIntegrationTests
-#include <boost/algorithm/string/join.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include <opm/parser/eclipse/Python/Python.hpp>
 #include <opm/parser/eclipse/EclipseState/EclipseState.hpp>
 #include <opm/parser/eclipse/EclipseState/Grid/FieldPropsManager.hpp>
 #include <opm/parser/eclipse/EclipseState/Runspec.hpp>
@@ -595,7 +595,8 @@ BOOST_AUTO_TEST_CASE( MULTISEGMENT_ABS ) {
     const EclipseState state(deck);
     const TableManager table ( deck );
     Runspec runspec (deck);
-    const Schedule sched(deck, state);
+    auto python = std::make_shared<Python>();
+    const Schedule sched(deck, state, python);
 
     // checking the relation between segments and completions
     // and also the depth of completions
@@ -1081,9 +1082,8 @@ BOOST_AUTO_TEST_CASE( TITLE ) {
     const auto& item = record.getItem(0);
 
     std::vector<std::string> itemValue = item.getData< std::string >();
-    std::string itemValueString = boost::algorithm::join(itemValue, " ");
-
-    BOOST_CHECK_EQUAL(0, itemValueString.compare("This is the title of the model."));
+    std::vector<std::string> expected = {"This", "is", "the", "title", "of", "the", "model."};
+    BOOST_CHECK(itemValue == expected);
     BOOST_CHECK_EQUAL(true, deck.hasKeyword("START"));
 }
 
@@ -1370,7 +1370,8 @@ BOOST_AUTO_TEST_CASE( WCONPROD ) {
     TableManager table ( deck );
     FieldPropsManager fp( deck, Phases{true, true, true}, grid, table);
     Runspec runspec (deck);
-    Schedule sched(deck, grid, fp, runspec );
+    auto python = std::make_shared<Python>();
+    Schedule sched(deck, grid, fp, runspec, python);
 
     BOOST_CHECK_EQUAL(5U, sched.numWells());
     BOOST_CHECK(sched.hasWell("INJE1"));
@@ -1412,11 +1413,12 @@ BOOST_AUTO_TEST_CASE( WCONINJE ) {
     Parser parser;
     std::string wconprodFile(pathprefix() + "WellWithWildcards/WCONINJE1");
     auto deck = parser.parseFile(wconprodFile);
+    auto python = std::make_shared<Python>();
     EclipseGrid grid(30,30,30);
     TableManager table ( deck );
     FieldPropsManager fp(deck, Phases{true, true, true}, grid, table);
     Runspec runspec (deck);
-    Schedule sched( deck, grid, fp, runspec);
+    Schedule sched( deck, grid, fp, runspec, python);
     SummaryState st(std::chrono::system_clock::now());
 
     BOOST_CHECK_EQUAL(5U, sched.numWells());

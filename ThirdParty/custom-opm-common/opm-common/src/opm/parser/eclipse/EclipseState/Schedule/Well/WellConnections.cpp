@@ -140,6 +140,17 @@ inline std::array< size_t, 3> directionIndices(const Opm::Connection::Direction 
     }
 
 
+    WellConnections WellConnections::serializeObject()
+    {
+        WellConnections result;
+        result.m_ordering = Connection::Order::DEPTH;
+        result.headI = 1;
+        result.headJ = 2;
+        result.m_connections = {Connection::serializeObject()};
+
+        return result;
+    }
+
 
     WellConnections::WellConnections(const WellConnections& src, const EclipseGrid& grid) :
         m_ordering(src.ordering()),
@@ -151,6 +162,25 @@ inline std::array< size_t, 3> directionIndices(const Opm::Connection::Direction 
                 this->add(c);
         }
     }
+
+    std::vector<const Connection *> WellConnections::output(const EclipseGrid& grid) const {
+        if (this->m_connections.empty())
+            return {};
+
+        std::vector<const Connection*> out;
+        for (const auto& conn : this->m_connections)
+            if (grid.cellActive(conn.getI(), conn.getJ(), conn.getK()))
+                out.push_back( &conn );
+
+        if (!this->m_connections[0].attachedToSegment() && (this->m_ordering != Connection::Order::INPUT)) {
+            std::sort(out.begin(), out.end(), [](const Opm::Connection* conn1, const Opm::Connection* conn2)
+                                                {
+                                                    return conn1->sort_value() < conn2->sort_value();
+                                                });
+        }
+        return out;
+    }
+
 
     void WellConnections::addConnection(int i, int j , int k ,
                                         std::size_t global_index,
@@ -358,7 +388,7 @@ inline std::array< size_t, 3> directionIndices(const Opm::Connection::Direction 
                                     direction, ctf_kind,
                                     noConn, 0., 0., defaultSatTable);
             } else {
-                std::size_t css_ind = prev->getCompSegSeqIndex();
+                std::size_t css_ind = prev->sort_value();
                 int conSegNo = prev->segment();
                 double conSDStart = prev->getSegDistStart();
                 double conSDEnd = prev->getSegDistEnd();
@@ -375,7 +405,7 @@ inline std::array< size_t, 3> directionIndices(const Opm::Connection::Direction 
                                    skin_factor,
                                    satTableId,
                                    direction, ctf_kind,
-                                   prev->getSeqIndex(), conSDStart, conSDEnd, defaultSatTable);
+                                   prev->sort_value(), conSDStart, conSDEnd, defaultSatTable);
 
                 prev->updateSegment(conSegNo,
                                     depth,
@@ -440,17 +470,31 @@ inline std::array< size_t, 3> directionIndices(const Opm::Connection::Direction 
 
 
 
-    void WellConnections::order(size_t well_i, size_t well_j)
+    void WellConnections::order()
     {
         if (m_connections.empty())
             return;
 
-        if (this->m_ordering != Connection::Order::TRACK)
-            return;
+        if (this->m_connections[0].attachedToSegment())
+            this->orderMSW();
+        else if (this->m_ordering == Connection::Order::TRACK)
+            this->orderTRACK();
 
+    }
+
+
+    void WellConnections::orderMSW() {
+        std::sort(this->m_connections.begin(), this->m_connections.end(), [](const Opm::Connection& conn1, const Opm::Connection& conn2)
+                  {
+                      return conn1.sort_value() < conn2.sort_value();
+                  });
+    }
+
+
+    void WellConnections::orderTRACK() {
         // Find the first connection and swap it into the 0-position.
         const double surface_z = 0.0;
-        size_t first_index = findClosestConnection(well_i, well_j, surface_z, 0);
+        size_t first_index = findClosestConnection(this->headI, this->headJ, surface_z, 0);
         std::swap(m_connections[first_index], m_connections[0]);
 
         // Repeat for remaining connections.
@@ -468,7 +512,6 @@ inline std::array< size_t, 3> directionIndices(const Opm::Connection::Direction 
             std::swap(m_connections[next_index], m_connections[pos]);
         }
     }
-
 
 
     size_t WellConnections::findClosestConnection(int oi, int oj, double oz, size_t start_pos)

@@ -32,7 +32,7 @@ int Opm::EclIO::flipEndianInt(int num)
     return num;
 }
 
-long int Opm::EclIO::flipEndianLongInt(long int num)
+int64_t Opm::EclIO::flipEndianLongInt(int64_t num)
 {
     //unsigned long int tmp = __builtin_bswap64(num);
     //return static_cast<long int>(tmp);

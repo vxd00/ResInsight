@@ -32,7 +32,7 @@
 #include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
 #include <opm/parser/eclipse/Deck/DeckRecord.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/TimeMap.hpp>
-#include <opm/parser/eclipse/Utility/String.hpp>
+#include <opm/common/utility/String.hpp>
 
 
 constexpr const std::time_t invalid_time = -1;
@@ -56,6 +56,7 @@ namespace {
                                                       {"NOV", 11},
                                                       {"DEC", 12},
                                                       {"DES", 12}};
+
 }
 
     void TimeMap::init_start(std::time_t start_time) {
@@ -164,6 +165,15 @@ namespace {
                 this->m_skiprest = true;
             }
         }
+    }
+
+    TimeMap TimeMap::serializeObject()
+    {
+        TimeMap result({123});
+        result.m_skiprest = true;
+        result.m_restart_offset = 4;
+
+        return result;
     }
 
 

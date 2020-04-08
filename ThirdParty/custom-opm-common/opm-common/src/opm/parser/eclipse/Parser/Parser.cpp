@@ -23,6 +23,9 @@
 #include <iomanip>
 #include <iostream>
 #include <stack>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <opm/common/utility/FileSystem.hpp>
 
@@ -46,7 +49,7 @@
 #include <opm/parser/eclipse/Parser/ParserKeyword.hpp>
 #include <opm/parser/eclipse/Parser/ParserRecord.hpp>
 #include <opm/parser/eclipse/Utility/Stringview.hpp>
-#include <opm/parser/eclipse/Utility/String.hpp>
+#include <opm/common/utility/String.hpp>
 
 #include "raw/RawConsts.hpp"
 #include "raw/RawEnums.hpp"
@@ -413,7 +416,7 @@ ParserState::ParserState(const std::vector<std::pair<std::string, std::string>>&
                          const ParseContext& __parseContext,
                          ErrorGuard& errors_arg) :
     code_keywords(code_keywords_arg),
-    python( PythonInstance() ),
+    python( std::make_unique<Python>() ),
     parseContext( __parseContext ),
     errors( errors_arg )
 {}
@@ -424,7 +427,7 @@ ParserState::ParserState( const std::vector<std::pair<std::string, std::string>>
                           Opm::filesystem::path p ) :
     code_keywords(code_keywords_arg),
     rootPath( Opm::filesystem::canonical( p ).parent_path() ),
-    python( PythonInstance() ),
+    python( std::make_unique<Python>() ),
     parseContext( context ),
     errors( errors_arg )
 {

@@ -19,6 +19,7 @@
 #include "config.h"
 
 #include <opm/io/eclipse/ESmry.hpp>
+#include <opm/common/utility/FileSystem.hpp>
 
 #define BOOST_TEST_MODULE Test EclIO
 #include <boost/test/unit_test.hpp>
@@ -26,6 +27,7 @@
 #include <opm/io/eclipse/EclFile.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -154,6 +156,14 @@ BOOST_AUTO_TEST_CASE(TestESmry_1) {
 
     std::vector<float> smryVect = smry1.get("TIME");
     BOOST_CHECK_EQUAL(smryVect==time_ref, true);
+    const auto dates = smry1.dates();
+    for (std::size_t index = 0; index < dates.size(); index++) {
+        auto diff = dates[index]- smry1.startdate();
+        auto diff_seconds = std::chrono::duration_cast<std::chrono::seconds>(diff).count();
+        BOOST_CHECK_CLOSE(diff_seconds, 24*3600 * smryVect[index], 1e-6);
+    }
+
+
 
     smryVect = smry1.get("WGPR:PROD");
 
@@ -352,6 +362,16 @@ BOOST_AUTO_TEST_CASE(TestESmry_4) {
 }
 
 
+namespace fs = Opm::filesystem;
+BOOST_AUTO_TEST_CASE(TestCreateRSM) {
+    ESmry smry1("SPE1CASE1.SMSPEC");
+
+    smry1.write_rsm_file();
+    BOOST_CHECK(fs::exists("SPE1CASE1.RSM"));
+
+    smry1.write_rsm_file("TEST.RSM");
+    BOOST_CHECK(fs::exists("TEST.RSM"));
+}
 
 BOOST_AUTO_TEST_CASE(TestUnits) {
     ESmry smry("SPE1CASE1.SMSPEC");

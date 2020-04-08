@@ -27,6 +27,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <opm/common/utility/TimeService.hpp>
+#include <opm/parser/eclipse/Python/Python.hpp>
 
 #include <opm/common/OpmLog/Location.hpp>
 #include <opm/parser/eclipse/EclipseState/Grid/FieldPropsManager.hpp>
@@ -43,6 +44,7 @@
 #include <opm/parser/eclipse/Parser/Parser.hpp>
 #include <opm/parser/eclipse/Parser/ParseContext.hpp>
 #include <opm/parser/eclipse/Parser/ErrorGuard.hpp>
+#include <opm/parser/eclipse/Python/Python.hpp>
 
 using namespace Opm;
 
@@ -122,6 +124,7 @@ ENDACTIO
 TSTEP
    10 /
 )"};
+    auto python = std::make_shared<Python>();
     Opm::Parser parser;
     auto deck1 = parser.parseString(MISSING_END);
     auto deck2 = parser.parseString(WITH_WELSPECS);
@@ -132,16 +135,16 @@ TSTEP
     Runspec runspec (deck1);
 
     // The ACTIONX keyword has no matching 'ENDACTIO' -> exception
-    BOOST_CHECK_THROW(Schedule(deck1, grid1, fp, runspec ), std::invalid_argument);
+    BOOST_CHECK_THROW(Schedule(deck1, grid1, fp, runspec, python), std::invalid_argument);
 
-    Schedule sched(deck2, grid1, fp, runspec);
+    Schedule sched(deck2, grid1, fp, runspec, python);
     BOOST_CHECK( !sched.hasWell("W1") );
     BOOST_CHECK( sched.hasWell("W2"));
 
     // The deck3 contains the 'GRID' keyword in the ACTIONX block - that is not a whitelisted keyword.
     ParseContext parseContext( {{ParseContext::ACTIONX_ILLEGAL_KEYWORD, InputError::THROW_EXCEPTION}} );
     ErrorGuard errors;
-    BOOST_CHECK_THROW(Schedule(deck3, grid1, fp, runspec, parseContext, errors), std::invalid_argument);
+    BOOST_CHECK_THROW(Schedule(deck3, grid1, fp, runspec, parseContext, errors, python), std::invalid_argument);
 }
 
 
@@ -168,6 +171,12 @@ BOOST_AUTO_TEST_CASE(TestActions) {
 
         Opm::Action::ActionX action3("NAME3", 1000000, 0, asTimeT(TimeStampUTC(TimeStampUTC::YMD{ 2000, 7, 1 })) );
         config.add(action3);
+
+        Opm::Action::PyAction py_action1("PYTHON1", Opm::Action::PyAction::RunCount::single, "import sys");
+        config.add(py_action1);
+
+        Opm::Action::PyAction py_action2("PYTHON2", Opm::Action::PyAction::RunCount::single, "import sys");
+        config.add(py_action2);
     }
     const Opm::Action::ActionX& action2 = config.get("NAME");
     // The action2 instance has an empty condition, so it will never evaluate to true.
@@ -182,6 +191,10 @@ BOOST_AUTO_TEST_CASE(TestActions) {
         BOOST_CHECK( !ptr->eval(asTimeT(TimeStampUTC(TimeStampUTC::YMD{ 2000, 8, 7 })), context));
     }
     BOOST_CHECK(!action2.eval(asTimeT(TimeStampUTC(TimeStampUTC::YMD{ 2000, 8, 7 })), context));
+
+
+    const auto& python_actions = config.pending_python();
+    BOOST_CHECK_EQUAL(python_actions.size(), 2);
 }
 
 
@@ -220,12 +233,13 @@ TSTEP
     std::string deck_string = start + action_string + end;
     Opm::Parser parser;
     auto deck = parser.parseString(deck_string);
+    auto python = std::make_shared<Python>();
     EclipseGrid grid1(10,10,10);
     TableManager table ( deck );
     FieldPropsManager fp( deck, Phases{true, true, true}, grid1, table);
     Runspec runspec(deck);
 
-    return Schedule(deck, grid1, fp, runspec);
+    return Schedule(deck, grid1, fp, runspec, python);
 }
 
 
@@ -693,9 +707,10 @@ TSTEP
     EclipseGrid grid1(10,10,10);
     TableManager table ( deck );
     FieldPropsManager fp( deck, Phases{true, true, true}, grid1, table);
+    auto python = std::make_shared<Python>();
 
     Runspec runspec (deck);
-    Schedule sched(deck, grid1, fp, runspec);
+    Schedule sched(deck, grid1, fp, runspec, python);
     const auto& actions0 = sched.actions(0);
     BOOST_CHECK_EQUAL(actions0.size(), 0);
 

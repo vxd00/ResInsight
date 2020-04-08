@@ -35,6 +35,7 @@
 #include <opm/output/data/Groups.hpp>
 #include <opm/output/eclipse/Summary.hpp>
 
+#include <opm/parser/eclipse/Python/Python.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/SummaryState.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 #include <opm/parser/eclipse/Units/UnitSystem.hpp>
@@ -371,6 +372,7 @@ struct setup {
     Deck deck;
     EclipseState es;
     const EclipseGrid& grid;
+    std::shared_ptr<Python> python;
     Schedule schedule;
     SummaryConfig config;
     data::Wells wells;
@@ -384,7 +386,8 @@ struct setup {
         deck( Parser().parseFile( path) ),
         es( deck ),
         grid( es.getInputGrid() ),
-        schedule( deck, es),
+        python( std::make_shared<Python>() ),
+        schedule( deck, es, python),
         config( deck, schedule, es.getTableManager()),
         wells( result_wells() ),
         groups( result_groups() ),
@@ -905,6 +908,43 @@ BOOST_AUTO_TEST_CASE(completion_kewords) {
     values for producers*/
     BOOST_CHECK_CLOSE( -300.3,     ecl_sum_get_well_completion_var( resp, 1, "W_3", "CNFR", 3, 1, 1 ), 1e-5 );
     BOOST_CHECK_CLOSE(  200.3,     ecl_sum_get_well_completion_var( resp, 1, "W_2", "CNFR", 2, 1, 1 ), 1e-5 );
+}
+
+BOOST_AUTO_TEST_CASE(DATE) {
+    setup cfg( "test_summary_DATE" );
+
+    out::Summary writer( cfg.es, cfg.config, cfg.grid, cfg.schedule, cfg.name );
+    SummaryState st(std::chrono::system_clock::now());
+    writer.eval( st, 1, 1 * day, cfg.es, cfg.schedule, cfg.wells , cfg.groups, {});
+    writer.add_timestep( st, 1);
+    writer.eval( st, 2, 2 * day, cfg.es, cfg.schedule, cfg.wells , cfg.groups, {});
+    writer.add_timestep( st, 2);
+    writer.eval( st, 3, 18 * day, cfg.es, cfg.schedule, cfg.wells , cfg.groups, {});
+    writer.add_timestep( st, 3);
+    writer.eval( st, 4, 22 * day, cfg.es, cfg.schedule, cfg.wells , cfg.groups, {});
+    writer.add_timestep( st, 4);
+    writer.write();
+
+    auto res = readsum( cfg.name );
+    const auto* resp = res.get();
+
+    const auto& days = resp->get_at_rstep("DAY");
+    BOOST_CHECK_EQUAL(days[0], 11);
+    BOOST_CHECK_EQUAL(days[1], 12);
+    BOOST_CHECK_EQUAL(days[2], 28);
+    BOOST_CHECK_EQUAL(days[3],  1);
+
+    const auto& month = resp->get_at_rstep("MONTH");
+    BOOST_CHECK_EQUAL(month[0], 5);
+    BOOST_CHECK_EQUAL(month[1], 5);
+    BOOST_CHECK_EQUAL(month[2], 5);
+    BOOST_CHECK_EQUAL(month[3], 6);
+
+    const auto& year = resp->get_at_rstep("YEAR");
+    BOOST_CHECK_EQUAL(year[0], 2007);
+    BOOST_CHECK_EQUAL(year[1], 2007);
+    BOOST_CHECK_EQUAL(year[2], 2007);
+    BOOST_CHECK_EQUAL(year[3], 2007);
 }
 
 BOOST_AUTO_TEST_CASE(field_keywords) {

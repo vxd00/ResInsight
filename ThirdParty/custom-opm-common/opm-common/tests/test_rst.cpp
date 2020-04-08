@@ -23,6 +23,7 @@
 
 #include <vector>
 
+#include <opm/parser/eclipse/Python/Python.hpp>
 #include <opm/output/eclipse/WriteRestartHelpers.hpp>
 #include <opm/output/eclipse/AggregateWellData.hpp>
 #include <opm/output/eclipse/AggregateConnectionData.hpp>
@@ -182,22 +183,21 @@ TSTEP            -- 8
 
         return Opm::Parser{}.parseString(input);
     }
-
-
-
 } // namespace
 
 struct SimulationCase
 {
     explicit SimulationCase(const Opm::Deck& deck)
-        : es   { deck }
-        , grid { deck }
-        , sched{ deck, es }
+        : es    { deck }
+        , grid  { deck }
+        , python{ std::make_shared<Opm::Python>() }
+        , sched { deck, es, python}
     {}
 
     // Order requirement: 'es' must be declared/initialised before 'sched'.
     Opm::EclipseState es;
     Opm::EclipseGrid  grid;
+    std::shared_ptr<Opm::Python> python;
     Opm::Schedule     sched;
 };
 
@@ -214,6 +214,7 @@ BOOST_AUTO_TEST_CASE(group_test) {
                                                             simCase.grid,
                                                             simCase.sched,
                                                             0,
+                                                            sim_step,
                                                             sim_step,
                                                             sim_step);
 
@@ -264,6 +265,7 @@ BOOST_AUTO_TEST_CASE(State_test) {
                                                             simCase.grid,
                                                             simCase.sched,
                                                             0,
+                                                            sim_step,
                                                             sim_step,
                                                             sim_step);
 

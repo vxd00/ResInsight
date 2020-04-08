@@ -24,6 +24,7 @@
 
 #include <opm/io/eclipse/ERft.hpp>
 #include <opm/io/eclipse/OutputStream.hpp>
+#include <opm/parser/eclipse/Python/Python.hpp>
 
 #include <opm/output/data/Solution.hpp>
 #include <opm/output/data/Wells.hpp>
@@ -244,6 +245,7 @@ BOOST_AUTO_TEST_SUITE(Using_EclipseIO)
 
 BOOST_AUTO_TEST_CASE(test_RFT)
 {
+    auto python = std::make_shared<Python>();
     const auto rset = RSet{ "TESTRFT" };
 
     const auto eclipse_data_filename = std::string{ "testrft.DATA" };
@@ -263,7 +265,7 @@ BOOST_AUTO_TEST_CASE(test_RFT)
         const auto& grid = eclipseState.getInputGrid();
         const auto numCells = grid.getCartesianSize( );
 
-        const Schedule schedule(deck, eclipseState);
+        const Schedule schedule(deck, eclipseState, python);
         const SummaryConfig summary_config( deck, schedule, eclipseState.getTableManager( ));
 
         EclipseIO eclipseWriter( eclipseState, grid, schedule, summary_config );
@@ -325,7 +327,7 @@ namespace {
         >{};
 
         for (const auto& wellDate : rft.listOfRftReports()) {
-            dates[wellDate.first].push_back(wellDate.second);
+            dates[std::get<0>(wellDate)].push_back(std::get<1>(wellDate));
         }
 
         // Well OP_1
@@ -365,6 +367,7 @@ namespace {
 
 BOOST_AUTO_TEST_CASE(test_RFT2)
 {
+    auto python = std::make_shared<Python>();
     const auto rset = RSet{ "TESTRFT" };
 
     const auto eclipse_data_filename = std::string{ "testrft.DATA" };
@@ -384,7 +387,7 @@ BOOST_AUTO_TEST_CASE(test_RFT2)
         const auto& grid = eclipseState.getInputGrid();
         const auto numCells = grid.getCartesianSize( );
 
-        Schedule schedule(deck, eclipseState);
+        Schedule schedule(deck, eclipseState, python);
         SummaryConfig summary_config( deck, schedule, eclipseState.getTableManager( ));
         SummaryState st(std::chrono::system_clock::now());
 
@@ -453,12 +456,14 @@ namespace {
         {}
 
         explicit Setup(const ::Opm::Deck& deck)
-            : es   { deck }
-            , sched{ deck, es }
+            : es    { deck }
+            , python{ std::make_shared<::Opm::Python>() }
+            , sched { deck, es , python }
         {
         }
 
         ::Opm::EclipseState es;
+        std::shared_ptr<::Opm::Python> python;
         ::Opm::Schedule     sched;
     };
 

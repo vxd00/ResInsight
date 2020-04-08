@@ -35,6 +35,7 @@
 #include <opm/output/data/Groups.hpp>
 #include <opm/output/eclipse/Summary.hpp>
 
+#include <opm/parser/eclipse/Python/Python.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/SummaryState.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 #include <opm/parser/eclipse/Units/UnitSystem.hpp>
@@ -207,6 +208,7 @@ struct setup {
     Deck deck;
     EclipseState es;
     const EclipseGrid& grid;
+    std::shared_ptr<Python> python;
     Schedule schedule;
     SummaryConfig config;
     data::Wells wells;
@@ -220,7 +222,8 @@ struct setup {
         deck( Parser().parseFile( path) ),
         es( deck ),
         grid( es.getInputGrid() ),
-        schedule( deck, es),
+        python( std::make_shared<Python>() ),
+        schedule( deck, es, python),
         config( deck, schedule, es.getTableManager()),
         wells( result_wells() ),
         groups( result_groups() ),

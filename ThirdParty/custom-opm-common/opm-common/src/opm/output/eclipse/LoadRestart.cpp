@@ -906,30 +906,6 @@ namespace {
         return wells;
     }
 
-    std::map<
-        std::tuple<int, int, int>,
-        boost::iterator_range<const double*>::size_type
-    >
-    ijk_to_resID(const std::size_t  wellID,
-                 const std::size_t  nConn,
-                 const WellVectors& wellData)
-    {
-        using SizeT    = boost::iterator_range<const double*>::size_type;
-        auto  ijkToRes = std::map<std::tuple<int, int, int>, SizeT>{};
-
-        for (auto connID = 0*nConn; connID < nConn; ++connID) {
-            const auto icon = wellData.icon(wellID, connID);
-
-            const auto i = icon[VI::IConn::index::CellI] - 1;
-            const auto j = icon[VI::IConn::index::CellJ] - 1;
-            const auto k = icon[VI::IConn::index::CellK] - 1;
-
-            ijkToRes.emplace(std::make_tuple(i, j, k), connID);
-        }
-
-        return ijkToRes;
-    }
-
     void restoreConnRates(const WellVectors::Window<double>& xcon,
                           const Opm::UnitSystem&             usys,
                           const bool                         oil,
@@ -980,17 +956,24 @@ namespace {
         using Ix = ::Opm::RestartIO::Helpers::VectorItems::XConn::index;
 
         const auto iwel  = wellData.iwel(wellID);
-        const auto nConn = static_cast<std::size_t>(
-            iwel[VI::IWell::index::NConn]);
-
-        xw.connections.resize(nConn, Opm::data::Connection{});
+        const auto nConn = static_cast<std::size_t>(iwel[VI::IWell::index::NConn]);
 
         const auto oil = phases.active(Opm::Phase::OIL);
         const auto gas = phases.active(Opm::Phase::GAS);
         const auto wat = phases.active(Opm::Phase::WATER);
 
-        for (auto& xc : xw.connections) {
-            zeroConnRates(oil, gas, wat, xc);
+        {
+            const auto& connections = well.getConnections();
+            xw.connections.resize(connections.size(), Opm::data::Connection{});
+
+            auto simConnID = std::size_t{0};
+            for (const auto& conn : connections) {
+                auto& xc = xw.connections[simConnID];
+                zeroConnRates(oil, gas, wat, xc);
+
+                xc.index = conn.global_index();
+                ++simConnID;
+            }
         }
 
         if (! wellData.hasDefinedConnectionValues()) {
@@ -1000,33 +983,20 @@ namespace {
             return;
         }
 
-        const auto& conn0 = well.getConnections();
-        const auto conns = Opm::WellConnections(conn0, grid);
-        const auto ijk_to_res = ijk_to_resID(wellID, nConn, wellData);
+        for (auto rstConnID = 0*nConn; rstConnID < nConn; ++rstConnID) {
+            const auto icon = wellData.icon(wellID, rstConnID);
 
-        auto linConnID = std::size_t{0};
-        for (const auto& conn : conns) {
-            if (++linConnID > nConn) { continue; }
+            const auto i = icon[VI::IConn::index::CellI] - 1;
+            const auto j = icon[VI::IConn::index::CellJ] - 1;
+            const auto k = icon[VI::IConn::index::CellK] - 1;
 
-            auto& xc = xw.connections[linConnID - 1];
+            auto* xc = xw.find_connection(grid.getGlobalIndex(i, j, k));
+            if (xc == nullptr) { continue; }
 
-            const auto ijk =
-                std::make_tuple(conn.getI(), conn.getJ(), conn.getK());
+            const auto xcon = wellData.xcon(wellID, rstConnID);
+            restoreConnRates(xcon, usys, oil, gas, wat, *xc);
 
-            auto resPos = ijk_to_res.find(ijk);
-
-            if (resPos != std::end(ijk_to_res)) {
-                const auto connID = resPos->second;
-                const auto xcon   = wellData.xcon(wellID, connID);
-
-                restoreConnRates(xcon, usys, oil, gas, wat, xc);
-
-                xc.index = grid.getGlobalIndex(std::get<0>(ijk),
-                                               std::get<1>(ijk),
-                                               std::get<2>(ijk));
-
-                xc.pressure = usys.to_si(M::pressure, xcon[Ix::Pressure]);
-            }
+            xc->pressure = usys.to_si(M::pressure, xcon[Ix::Pressure]);
         }
     }
 
@@ -1370,6 +1340,7 @@ namespace {
 
         smry.update(key("WWIT"), xwel[VI::XWell::index::WatInjTotal]);
         smry.update(key("WGIT"), xwel[VI::XWell::index::GasInjTotal]);
+        smry.update(key("WVIT"), xwel[VI::XWell::index::VoidInjTotal]);
 
         smry.update(key("WOPTH"), xwel[VI::XWell::index::HistOilPrTotal]);
         smry.update(key("WWPTH"), xwel[VI::XWell::index::HistWatPrTotal]);
@@ -1407,6 +1378,7 @@ namespace {
 
         smry.update(key("WIT"), xgrp[VI::XGroup::index::WatInjTotal]);
         smry.update(key("GIT"), xgrp[VI::XGroup::index::GasInjTotal]);
+        smry.update(key("VIT"), xgrp[VI::XGroup::index::VoidInjTotal]);
 
         smry.update(key("OPTH"), xgrp[VI::XGroup::index::HistOilPrTotal]);
         smry.update(key("WPTH"), xgrp[VI::XGroup::index::HistWatPrTotal]);
@@ -1427,13 +1399,12 @@ namespace {
         // Well cumulatives
         {
             const auto  wellData = WellVectors { intehead, rst_view };
-            const auto& wells    = schedule.getWells(sim_step);
+            const auto& wells    = schedule.wellNames(sim_step);
 
             for (auto nWells = wells.size(), wellID = 0*nWells;
                  wellID < nWells; ++wellID)
             {
-                assign_well_cumulatives(wells[wellID].name(),
-                                        wellID, wellData, smry);
+                assign_well_cumulatives(wells[wellID], wellID, wellData, smry);
             }
         }
 

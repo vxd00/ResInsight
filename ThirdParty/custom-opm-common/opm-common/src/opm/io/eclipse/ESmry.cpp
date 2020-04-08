@@ -19,6 +19,7 @@
 #include <opm/io/eclipse/ESmry.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <exception>
 #include <iterator>
 #include <limits>
@@ -27,7 +28,7 @@
 #include <string>
 
 #include <opm/common/utility/FileSystem.hpp>
-
+#include <opm/common/utility/TimeService.hpp>
 #include <opm/io/eclipse/EclFile.hpp>
 /*
 
@@ -47,14 +48,42 @@
      RXF            +-+-+-         32768*R1(R2 + 10) |       11        RXF:2-3
      SOFX           OP_1           12675             |       12        SOFX:OP_1:12675, SOFX:OP_1:i,j,jk
 
- */
+*/
+
+
+namespace {
+
+std::chrono::system_clock::time_point make_date(const std::vector<int>& datetime) {
+    auto day = datetime[0];
+    auto month = datetime[1];
+    auto year = datetime[2];
+    auto hour = 0;
+    auto minute = 0;
+    auto second = 0;
+
+    if (datetime.size() == 6) {
+        hour = datetime[3];
+        minute = datetime[4];
+        auto total_usec = datetime[5];
+        second = total_usec / 1000000;
+    }
+
+
+    const auto ts = Opm::TimeStampUTC{ Opm::TimeStampUTC::YMD{ year, month, day}}.hour(hour).minutes(minute).seconds(second);
+    return std::chrono::system_clock::from_time_t( Opm::asTimeT(ts) );
+}
+
+
+}
+
 
 namespace Opm { namespace EclIO {
 
-ESmry::ESmry(const std::string &filename, bool loadBaseRunData)
+ESmry::ESmry(const std::string &filename, bool loadBaseRunData) :
+    inputFileName { filename },
+    summaryNodes { }
 {
 
-    Opm::filesystem::path inputFileName(filename);
     Opm::filesystem::path rootName = inputFileName.parent_path() / inputFileName.stem();
 
     // if root name (without any extension) given as first argument in constructor, binary will then be assumed
@@ -84,6 +113,12 @@ ESmry::ESmry(const std::string &filename, bool loadBaseRunData)
     std::set<std::string> keywList;
     std::vector<std::pair<std::string,int>> smryArray;
 
+    const std::unordered_set<std::string> segmentExceptions {
+        "SEPARATE",
+        "STEPTYPE",
+        "SUMTHIN",
+    } ;
+
     // Read data from the summary into local data members.
     {
         EclFile smspec(smspec_file.string());
@@ -100,12 +135,21 @@ ESmry::ESmry(const std::string &filename, bool loadBaseRunData)
         const std::vector<std::string> keywords = smspec.get<std::string>("KEYWORDS");
         const std::vector<std::string> wgnames = smspec.get<std::string>("WGNAMES");
         const std::vector<int> nums = smspec.get<int>("NUMS");
-
         const std::vector<std::string> units = smspec.get<std::string>("UNITS");
+
+        this->startdat = make_date(smspec.get<int>("STARTDAT"));
 
         for (unsigned int i=0; i<keywords.size(); i++) {
             const std::string keyString = makeKeyString(keywords[i], wgnames[i], nums[i]);
             if (keyString.length() > 0) {
+                summaryNodes.push_back({
+                    keywords[i],
+                    SummaryNode::category_from_keyword(keywords[i], segmentExceptions),
+                    SummaryNode::Type::Undefined,
+                    wgnames[i],
+                    nums[i]
+                });
+
                 keywList.insert(keyString);
                 kwunits[keyString] = units[i];
             }
@@ -142,12 +186,21 @@ ESmry::ESmry(const std::string &filename, bool loadBaseRunData)
         const std::vector<std::string> keywords = smspec_rst.get<std::string>("KEYWORDS");
         const std::vector<std::string> wgnames = smspec_rst.get<std::string>("WGNAMES");
         const std::vector<int> nums = smspec_rst.get<int>("NUMS");
-
         const std::vector<std::string> units = smspec_rst.get<std::string>("UNITS");
+
+        this->startdat = make_date(smspec_rst.get<int>("STARTDAT"));
 
         for (size_t i = 0; i < keywords.size(); i++) {
             const std::string keyString = makeKeyString(keywords[i], wgnames[i], nums[i]);
             if (keyString.length() > 0) {
+                summaryNodes.push_back({
+                    keywords[i],
+                    SummaryNode::category_from_keyword(keywords[i], segmentExceptions),
+                    SummaryNode::Type::Undefined,
+                    wgnames[i],
+                    nums[i]
+                });
+
                 keywList.insert(keyString);
                 kwunits[keyString] = units[i];
             }
@@ -321,7 +374,6 @@ ESmry::ESmry(const std::string &filename, bool loadBaseRunData)
             time = tmpData[0];
 
             if (time == 0.0) {
-                seqTime.push_back(time);
                 seqIndex.push_back(step);
             }
 
@@ -331,12 +383,10 @@ ESmry::ESmry(const std::string &filename, bool loadBaseRunData)
                 if (std::get<0>(arraySourceList[i]) == "SEQHDR") {
                     i++;
                     reportStepNumber++;
-                    seqTime.push_back(time);
                     seqIndex.push_back(step);
                 }
             } else {
                 reportStepNumber++;
-                seqTime.push_back(time);
                 seqIndex.push_back(step);
             }
 
@@ -494,6 +544,38 @@ std::string ESmry::makeKeyString(const std::string& keywordArg, const std::strin
     return keyStr;
 }
 
+std::string ESmry::unpackNumber(const SummaryNode& node) const {
+    if (node.category == SummaryNode::Category::Block ||
+        node.category == SummaryNode::Category::Connection) {
+        int _i,_j,_k;
+        ijk_from_global_index(node.number, _i, _j, _k);
+
+        return std::to_string(_i) + "," + std::to_string(_j) + "," + std::to_string(_k);
+    } else if (node.category == SummaryNode::Category::Region && node.keyword[2] == 'F') {
+        const auto r1 =  node.number % (1 << 15);
+        const auto r2 = (node.number / (1 << 15)) - 10;
+
+        return std::to_string(r1) + "-" + std::to_string(r2);
+    } else {
+        return std::to_string(node.number);
+    }
+}
+
+std::string ESmry::lookupKey(const SummaryNode& node) const {
+    return node.unique_key(std::bind( &ESmry::unpackNumber, this, std::placeholders::_1 ));
+}
+
+const std::vector<float>& ESmry::get(const SummaryNode& node) const {
+    return get(lookupKey(node));
+}
+
+std::vector<float> ESmry::get_at_rstep(const SummaryNode& node) const {
+    return get_at_rstep(lookupKey(node));
+}
+
+const std::string& ESmry::get_unit(const SummaryNode& node) const {
+    return get_unit(lookupKey(node));
+}
 
 const std::vector<float>& ESmry::get(const std::string& name) const
 {
@@ -511,17 +593,9 @@ const std::vector<float>& ESmry::get(const std::string& name) const
 
 std::vector<float> ESmry::get_at_rstep(const std::string& name) const
 {
-    const std::vector<float> full_vector= this->get(name);
-
-    std::vector<float> rstep_vector;
-    rstep_vector.reserve(seqIndex.size());
-
-    for (const auto& ind : seqIndex){
-        rstep_vector.push_back(full_vector[ind]);
-    }
-
-    return rstep_vector;
+    return this->rstep_vector( this->get(name) );
 }
+
 
 int ESmry::timestepIdxAtReportstepStart(const int reportStep) const
 {
@@ -540,5 +614,33 @@ int ESmry::timestepIdxAtReportstepStart(const int reportStep) const
 const std::string& ESmry::get_unit(const std::string& name) const {
     return kwunits.at(name);
 }
+
+const std::vector<std::string>& ESmry::keywordList() const {
+    return keyword;
+}
+
+const std::vector<SummaryNode>& ESmry::summaryNodeList() const {
+    return summaryNodes;
+}
+
+std::vector<std::chrono::system_clock::time_point> ESmry::dates() const {
+    double time_unit = 24 * 3600;
+    std::vector<std::chrono::system_clock::time_point> d;
+
+    using namespace std::chrono;
+    using TP      = time_point<system_clock>;
+    using DoubSec = duration<double, seconds::period>;
+
+    for (const auto& t : this->get("TIME"))
+        d.push_back( this->startdat + duration_cast<TP::duration>(DoubSec(t * time_unit)));
+
+    return d;
+}
+
+std::vector<std::chrono::system_clock::time_point> ESmry::dates_at_rstep() const {
+    const auto& full_vector = this->dates();
+    return this->rstep_vector(full_vector);
+}
+
 
 }} // namespace Opm::ecl

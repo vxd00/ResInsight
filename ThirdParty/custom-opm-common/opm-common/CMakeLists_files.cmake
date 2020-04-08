@@ -41,6 +41,7 @@ list (APPEND MAIN_SOURCE_FILES
 )
 if(ENABLE_ECL_INPUT)
   list(APPEND MAIN_SOURCE_FILES
+    src/opm/io/eclipse/SummaryNode.cpp
     src/opm/json/JsonObject.cpp
     src/opm/parser/eclipse/Deck/Deck.cpp
     src/opm/parser/eclipse/Deck/DeckItem.cpp
@@ -83,6 +84,7 @@ if(ENABLE_ECL_INPUT)
     src/opm/parser/eclipse/EclipseState/IOConfig/IOConfig.cpp
     src/opm/parser/eclipse/EclipseState/IOConfig/RestartConfig.cpp
     src/opm/parser/eclipse/EclipseState/Runspec.cpp
+    src/opm/parser/eclipse/EclipseState/TracerConfig.cpp
     src/opm/parser/eclipse/EclipseState/Schedule/Action/ActionAST.cpp
     src/opm/parser/eclipse/EclipseState/Schedule/Action/ActionContext.cpp
     src/opm/parser/eclipse/EclipseState/Schedule/Action/ActionResult.cpp
@@ -114,6 +116,7 @@ if(ENABLE_ECL_INPUT)
     src/opm/parser/eclipse/EclipseState/Schedule/MSW/Valve.cpp
     src/opm/parser/eclipse/EclipseState/Schedule/OilVaporizationProperties.cpp
     src/opm/parser/eclipse/EclipseState/Schedule/RFTConfig.cpp
+    src/opm/parser/eclipse/EclipseState/Schedule/RPTConfig.cpp
     src/opm/parser/eclipse/EclipseState/Schedule/Schedule.cpp
     src/opm/parser/eclipse/EclipseState/Schedule/ScheduleTypes.cpp
     src/opm/parser/eclipse/EclipseState/Schedule/SummaryState.cpp
@@ -238,7 +241,9 @@ if(ENABLE_ECL_OUTPUT)
           src/opm/io/eclipse/ERft.cpp
           src/opm/io/eclipse/ERst.cpp
           src/opm/io/eclipse/ESmry.cpp
+          src/opm/io/eclipse/ESmry_write_rsm.cpp
           src/opm/io/eclipse/OutputStream.cpp
+          src/opm/io/eclipse/SummaryNode.cpp
           src/opm/io/eclipse/rst/connection.cpp
           src/opm/io/eclipse/rst/group.cpp
           src/opm/io/eclipse/rst/header.cpp
@@ -326,6 +331,7 @@ if(ENABLE_ECL_INPUT)
     tests/parser/ParseDATAWithDefault.cpp
     tests/parser/PYACTION.cpp
     tests/parser/RawKeywordTests.cpp
+    tests/parser/test_ReportConfig.cpp
     tests/parser/ResinsightTest.cpp
     tests/parser/RestartConfigTests.cpp
     tests/parser/RFTConfigTests.cpp
@@ -347,6 +353,7 @@ if(ENABLE_ECL_INPUT)
     tests/parser/TableSchemaTests.cpp
     tests/parser/ThresholdPressureTest.cpp
     tests/parser/TimeMapTest.cpp
+    tests/parser/TracerTests.cpp
     tests/parser/TransMultTests.cpp
     tests/parser/TuningTests.cpp
     tests/parser/UDQTests.cpp
@@ -444,6 +451,8 @@ if(ENABLE_ECL_INPUT)
     tests/SPE1CASE1A.UNSMRY
     tests/SPE1CASE1_RST60.SMSPEC
     tests/SPE1CASE1_RST60.UNSMRY
+    tests/MODEL2_RESTART.DATA
+    tests/restart/MODEL2.UNRST
   )
   list (APPEND EXAMPLE_SOURCE_FILES
     #examples/opmi.cpp
@@ -500,15 +509,16 @@ list( APPEND PUBLIC_HEADER_FILES
       opm/common/utility/parameters/ParameterStrings.hpp
       opm/common/utility/parameters/ParameterTools.hpp
       opm/common/utility/numeric/calculateCellVol.hpp
+      opm/common/utility/String.hpp
       opm/common/utility/TimeService.hpp
 )
 if(ENABLE_ECL_INPUT)
   list(APPEND PUBLIC_HEADER_FILES
+       opm/io/eclipse/SummaryNode.hpp
        opm/json/JsonObject.hpp
        opm/parser/eclipse/Utility/Stringview.hpp
        opm/parser/eclipse/Utility/Functional.hpp
        opm/parser/eclipse/Utility/Typetools.hpp
-       opm/parser/eclipse/Utility/String.hpp
        opm/parser/eclipse/Generator/KeywordGenerator.hpp
        opm/parser/eclipse/Generator/KeywordLoader.hpp
        opm/parser/eclipse/Units/UnitSystem.hpp
@@ -547,6 +557,7 @@ if(ENABLE_ECL_INPUT)
        opm/parser/eclipse/EclipseState/Grid/FaceDir.hpp
        opm/parser/eclipse/EclipseState/Grid/MinpvMode.hpp
        opm/parser/eclipse/EclipseState/EndpointScaling.hpp
+       opm/parser/eclipse/EclipseState/TracerConfig.hpp
        opm/parser/eclipse/EclipseState/Tables/DenT.hpp
        opm/parser/eclipse/EclipseState/Tables/SimpleTable.hpp
        opm/parser/eclipse/EclipseState/Tables/StandardCond.hpp
@@ -620,6 +631,7 @@ if(ENABLE_ECL_INPUT)
        opm/parser/eclipse/EclipseState/Tables/ImkrvdTable.hpp
        opm/parser/eclipse/EclipseState/Tables/Sof3Table.hpp
        opm/parser/eclipse/EclipseState/Tables/SgofTable.hpp
+       opm/parser/eclipse/EclipseState/Tables/TracerVdTable.hpp
        opm/parser/eclipse/EclipseState/EclipseState.hpp
        opm/parser/eclipse/EclipseState/EclipseConfig.hpp
        opm/parser/eclipse/EclipseState/Aquancon.hpp
@@ -659,6 +671,7 @@ if(ENABLE_ECL_INPUT)
        opm/parser/eclipse/EclipseState/Schedule/DynamicVector.hpp
        opm/parser/eclipse/EclipseState/Schedule/SummaryState.hpp
        opm/parser/eclipse/EclipseState/Schedule/RFTConfig.hpp
+       opm/parser/eclipse/EclipseState/Schedule/RPTConfig.hpp
        opm/parser/eclipse/EclipseState/Schedule/Schedule.hpp
        opm/parser/eclipse/EclipseState/Schedule/ScheduleTypes.hpp
        opm/parser/eclipse/EclipseState/Schedule/Tuning.hpp
@@ -723,6 +736,7 @@ if(ENABLE_ECL_OUTPUT)
         opm/io/eclipse/ESmry.hpp
         opm/io/eclipse/PaddedOutputString.hpp
         opm/io/eclipse/OutputStream.hpp
+        opm/io/eclipse/SummaryNode.hpp
         opm/io/eclipse/rst/connection.hpp
         opm/io/eclipse/rst/group.hpp
         opm/io/eclipse/rst/header.hpp
@@ -766,4 +780,10 @@ if(ENABLE_ECL_OUTPUT)
         opm/output/eclipse/WriteRestartHelpers.hpp
         opm/output/OutputWriter.hpp
         )
+endif()
+
+if(ENABLE_ECL_INPUT OR ENABLE_ECL_OUTPUT)
+  list(APPEND TEST_SOURCE_FILES
+      tests/test_SummaryNode.cpp
+)
 endif()

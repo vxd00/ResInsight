@@ -258,6 +258,9 @@ namespace {
             // returns the target control mode requested in the simulation
             // deck.  This item is supposed to be the well's actual, active
             // target control mode in the simulator.
+            //
+            // Observe that the setupCurrentContro() function is called again
+            // for open wells in the dynamicContrib() function.
             setCurrentControl(well, eclipseControlMode(well, st), iWell);
 
             // Multi-segmented well information
@@ -596,6 +599,7 @@ namespace {
             // case of well alternating between injecting water and gas.
             xWell[Ix::WatInjTotal]     = get("WWIT");
             xWell[Ix::GasInjTotal]     = get("WGIT");
+            xWell[Ix::VoidInjTotal]    = get("WVIT");
             xWell[Ix::HistWatInjTotal] = get("WWITH");
             xWell[Ix::HistGasInjTotal] = get("WGITH");
         }
@@ -718,11 +722,11 @@ namespace {
             };
         }
 
-        Opm::RestartIO::Helpers::ActionResStatus 
+        Opm::RestartIO::Helpers::ActionResStatus
         act_res_stat(const Opm::Schedule& sched, const Opm::SummaryState&  smry, const std::size_t sim_step) {
             std::vector<Opm::Action::Result> act_res;
             std::vector<std::string> act_name;
-            const auto acts = sched.actions(sim_step);
+            const auto& acts = sched.actions(sim_step);
             Opm::Action::Context context(smry);
             auto sim_time = sched.simTime(sim_step);
             for (const auto& action : acts.pending(sim_time)) {
@@ -731,7 +735,7 @@ namespace {
             }
             return {act_res, act_name};
         }
-        
+
         template <class ZWellArray>
         void staticContrib(const Opm::Well& well, const Opm::RestartIO::Helpers::ActionResStatus& actResStat, ZWellArray& zWell)
         {
@@ -741,7 +745,7 @@ namespace {
             for (std::size_t ind = 0; ind < actResStat.result.size(); ind++) {
                 if (actResStat.result[ind].has_well(well.name())) {
                     zWell[Ix::ActionX] = actResStat.name[ind];
-                }                
+                }
             }
         }
     } // ZWell

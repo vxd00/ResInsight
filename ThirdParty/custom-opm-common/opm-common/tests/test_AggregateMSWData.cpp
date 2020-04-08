@@ -23,6 +23,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <opm/output/eclipse/AggregateWellData.hpp>
+#include <opm/parser/eclipse/Python/Python.hpp>
 
 #include <opm/output/eclipse/VectorItems/intehead.hpp>
 #include <opm/output/eclipse/VectorItems/well.hpp>
@@ -586,12 +587,14 @@ struct SimulationCase
     explicit SimulationCase(const Opm::Deck& deck)
         : es   ( deck )
         , grid ( deck )
-        , sched( deck, es )
+        , python( std::make_shared<Opm::Python>() )
+        , sched( deck, es, python )
     {}
 
     // Order requirement: 'es' must be declared/initialised before 'sched'.
     Opm::EclipseState es;
-    Opm::EclipseGrid grid;
+    Opm::EclipseGrid  grid;
+    std::shared_ptr<Opm::Python>  python;
     Opm::Schedule     sched;
 };
 
@@ -843,7 +846,7 @@ BOOST_AUTO_TEST_CASE(MSW_RST) {
                                  );
     const auto& iseg = amswd.getISeg();
     const auto& rseg = amswd.getRSeg();
-    auto segment = Opm::RestartIO::RstSegment(simCase.es.getUnits(), iseg.data(), rseg.data());
+    auto segment = Opm::RestartIO::RstSegment(simCase.es.getUnits(), 1, iseg.data(), rseg.data());
 }
 
 

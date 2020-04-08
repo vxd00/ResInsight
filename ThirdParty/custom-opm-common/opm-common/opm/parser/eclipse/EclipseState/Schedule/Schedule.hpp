@@ -98,7 +98,9 @@ namespace Opm
     class EclipseGrid;
     class EclipseState;
     class FieldPropsManager;
+    class Python;
     class Runspec;
+    class RPTConfig;
     class SCHEDULESection;
     class SummaryState;
     class TimeMap;
@@ -122,6 +124,7 @@ namespace Opm
                  const Runspec &runspec,
                  const ParseContext& parseContext,
                  ErrorGuard& errors,
+                 std::shared_ptr<const Python> python,
                  const RestartIO::RstState* rst = nullptr);
 
         template<typename T>
@@ -131,18 +134,21 @@ namespace Opm
                  const Runspec &runspec,
                  const ParseContext& parseContext,
                  T&& errors,
+                 std::shared_ptr<const Python> python,
                  const RestartIO::RstState* rst = nullptr);
 
         Schedule(const Deck& deck,
                  const EclipseGrid& grid,
                  const FieldPropsManager& fp,
                  const Runspec &runspec,
+                 std::shared_ptr<const Python> python,
                  const RestartIO::RstState* rst = nullptr);
 
         Schedule(const Deck& deck,
                  const EclipseState& es,
                  const ParseContext& parseContext,
                  ErrorGuard& errors,
+                 std::shared_ptr<const Python> python,
                  const RestartIO::RstState* rst = nullptr);
 
         template <typename T>
@@ -150,36 +156,20 @@ namespace Opm
                  const EclipseState& es,
                  const ParseContext& parseContext,
                  T&& errors,
+                 std::shared_ptr<const Python> python,
                  const RestartIO::RstState* rst = nullptr);
 
         Schedule(const Deck& deck,
                  const EclipseState& es,
+                 std::shared_ptr<const Python> python,
                  const RestartIO::RstState* rst = nullptr);
 
-        Schedule(const TimeMap& timeMap,
-                 const WellMap& wellsStatic,
-                 const GroupMap& group,
-                 const DynamicState<OilVaporizationProperties>& oilVapProps,
-                 const Events& events,
-                 const DynamicVector<Deck>& modifierDeck,
-                 const DynamicState<Tuning>& tuning,
-                 const MessageLimits& messageLimits,
-                 const Runspec& runspec,
-                 const VFPProdMap& vfpProdTables,
-                 const VFPInjMap& vfpInjTables,
-                 const DynamicState<std::shared_ptr<WellTestConfig>>& wtestConfig,
-                 const DynamicState<std::shared_ptr<WListManager>>& wListManager,
-                 const DynamicState<std::shared_ptr<UDQConfig>>& udqConfig,
-                 const DynamicState<std::shared_ptr<UDQActive>>& udqActive,
-                 const DynamicState<std::shared_ptr<GuideRateConfig>>& guideRateConfig,
-                 const DynamicState<std::shared_ptr<GConSale>>& gconSale,
-                 const DynamicState<std::shared_ptr<GConSump>>& gconSump,
-                 const DynamicState<Well::ProducerCMode>& globalWhistCtlMode,
-                 const DynamicState<std::shared_ptr<Action::Actions>>& actions,
-                 const RFTConfig& rftconfig,
-                 const DynamicState<int>& nupCol,
-                 const RestartConfig& rst_config,
-                 const std::map<std::string,Events>& wellGroupEvents);
+        // The constructor *without* the Python arg should really only be used from Python itself
+        Schedule(const Deck& deck,
+                 const EclipseState& es,
+                 const RestartIO::RstState* rst = nullptr);
+
+        static Schedule serializeObject();
 
         /*
          * If the input deck does not specify a start time, Eclipse's 1. Jan
@@ -231,6 +221,8 @@ namespace Opm
         const UDQConfig& getUDQConfig(size_t timeStep) const;
         const Action::Actions& actions(std::size_t timeStep) const;
         void evalAction(const SummaryState& summary_state, size_t timeStep);
+
+        const RPTConfig& report_config(std::size_t timeStep) const;
 
         GTNode groupTree(std::size_t report_step) const;
         GTNode groupTree(const std::string& root_node, std::size_t report_step) const;
@@ -367,6 +359,8 @@ namespace Opm
                      Connection::Order wellConnectionOrder,
                      const UnitSystem& unit_system);
 
+        DynamicState<std::shared_ptr<RPTConfig>> rpt_config;
+
         GTNode groupTree(const std::string& root_node, std::size_t report_step, const GTNode * parent) const;
         void updateGroup(std::shared_ptr<Group> group, size_t reportStep);
         bool checkGroups(const ParseContext& parseContext, ErrorGuard& errors);
@@ -434,6 +428,7 @@ namespace Opm
         void handleWECON( const DeckKeyword& keyword, size_t currentStep, const ParseContext& parseContext, ErrorGuard& errors);
         void handleWHISTCTL(const DeckKeyword& keyword, std::size_t currentStep, const ParseContext& parseContext, ErrorGuard& errors);
         void handleMESSAGES(const DeckKeyword& keyword, size_t currentStep);
+        void handleRPTSCHED(const DeckKeyword& keyword, size_t currentStep);
         void handleVFPPROD(const DeckKeyword& vfpprodKeyword, const UnitSystem& unit_system, size_t currentStep);
         void handleVFPINJ(const DeckKeyword& vfpprodKeyword, const UnitSystem& unit_system, size_t currentStep);
         void checkUnhandledKeywords( const SCHEDULESection& ) const;

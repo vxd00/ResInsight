@@ -19,13 +19,12 @@
 
 #include <stdexcept>
 #include <iostream>
-#include <boost/filesystem.hpp>
 
 #define BOOST_TEST_MODULE MessageLimitTests
 
 #include <boost/test/unit_test.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <opm/parser/eclipse/Python/Python.hpp>
 #include <opm/parser/eclipse/EclipseState/Grid/EclipseGrid.hpp>
 #include <opm/parser/eclipse/EclipseState/Grid/FieldPropsManager.hpp>
 #include <opm/parser/eclipse/EclipseState/Runspec.hpp>
@@ -78,11 +77,12 @@ BOOST_AUTO_TEST_CASE(MESSAGES) {
         ;
 
     auto deck = parser.parseString(input);
+    auto python = std::make_shared<Python>();
     EclipseGrid grid(10,10,10);
     TableManager table ( deck );
     FieldPropsManager fp( deck, Phases{true, true, true}, grid, table);
     Runspec runspec (deck);
-    Schedule schedule(deck, grid, fp, runspec);
+    Schedule schedule(deck, grid, fp, runspec, python);
     const MessageLimits limits = schedule.getMessageLimits();
 
     BOOST_CHECK_EQUAL( limits.getBugPrintLimit( 0 ) , 77 );   // The pre Schedule initialization

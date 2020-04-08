@@ -25,10 +25,20 @@ namespace Opm {
 namespace Action {
 
 
-Actions::Actions(const std::vector<ActionX>& action, const std::vector<PyAction>& pyactions)
+Actions::Actions(const std::vector<ActionX>& action, const std::vector<PyAction>& pyaction)
     : actions(action),
-      pyactions(pyactions)
+      pyactions(pyaction)
 {}
+
+
+Actions Actions::serializeObject()
+{
+    Actions result;
+    result.actions = {ActionX::serializeObject()};
+    result.pyactions = {PyAction::serializeObject()};
+
+    return result;
+}
 
 
 size_t Actions::size() const {
@@ -85,6 +95,16 @@ bool Actions::ready(std::time_t sim_time) const {
             return true;
     }
     return false;
+}
+
+std::vector<const PyAction *> Actions::pending_python() const {
+    std::vector<const PyAction *> pyaction_vector;
+    for (const auto& pyaction : this->pyactions) {
+        if (pyaction.active())
+            pyaction_vector.push_back( &pyaction );
+    }
+    return pyaction_vector;
+
 }
 
 

@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 
+#include <opm/io/eclipse/SummaryNode.hpp>
 #include <opm/common/OpmLog/Location.hpp>
 
 namespace Opm {
@@ -38,20 +39,13 @@ namespace Opm {
 
     class SummaryConfigNode {
     public:
-        enum class Category {
-            Well, Group, Field,
-            Region, Block,
-            Connection, Segment,
-            Miscellaneous,
-        };
-
-        enum class Type {
-            Rate, Total, Ratio, Pressure, Count, Mode,
-            Undefined,
-        };
+        using Category = Opm::EclIO::SummaryNode::Category;
+        using Type = Opm::EclIO::SummaryNode::Type;
 
         SummaryConfigNode() = default;
         explicit SummaryConfigNode(std::string keyword, const Category cat, Location loc_arg);
+
+        static SummaryConfigNode serializeObject();
 
         SummaryConfigNode& parameterType(const Type type);
         SummaryConfigNode& namedEntity(std::string name);
@@ -67,6 +61,10 @@ namespace Opm {
 
         std::string uniqueNodeKey() const;
         const Location& location( ) const { return this->loc; }
+
+        operator Opm::EclIO::SummaryNode() const {
+            return { keyword_, category_, type_, name_, number_ };
+        }
 
         template<class Serializer>
         void serializeOp(Serializer& serializer)
@@ -150,6 +148,7 @@ namespace Opm {
                           const std::set<std::string>& shortKwds,
                           const std::set<std::string>& smryKwds);
 
+            static SummaryConfig serializeObject();
 
             const_iterator begin() const;
             const_iterator end() const;

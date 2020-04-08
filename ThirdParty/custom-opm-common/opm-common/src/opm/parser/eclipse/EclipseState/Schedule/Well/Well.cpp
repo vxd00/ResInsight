@@ -35,6 +35,8 @@
 #else
 #include <fnmatch.h>
 #endif
+#include <cmath>
+#include <ostream>
 
 namespace Opm {
 
@@ -168,6 +170,7 @@ Well::Well(const RestartIO::RstWell& rst_well,
         p->GasRate = rst_well.grat_target ;
         p->LiquidRate = rst_well.lrat_target ;
         p->ResVRate = rst_well.resv_target ;
+        p->VFPTableNumber = rst_well.vfp_table;
 
         if (rst_well.orat_target != 0)
             p->addProductionControl( Well::ProducerCMode::ORAT );
@@ -184,36 +187,44 @@ Well::Well(const RestartIO::RstWell& rst_well,
         if (rst_well.resv_target != 0)
             p->addProductionControl( Well::ProducerCMode::RESV );
 
-        switch (rst_well.active_control) {
-        case 1:
-            p->controlMode = Well::ProducerCMode::ORAT;
-            break;
-        case 2:
-            p->controlMode = Well::ProducerCMode::WRAT;
-            p->addProductionControl( Well::ProducerCMode::WRAT );
-            break;
-        case 3:
-            p->controlMode = Well::ProducerCMode::GRAT;
-            p->addProductionControl( Well::ProducerCMode::GRAT );
-            break;
-        case 4:
-            p->controlMode = Well::ProducerCMode::LRAT;
-            p->addProductionControl( Well::ProducerCMode::LRAT );
-            break;
-        case 5:
-            p->controlMode = Well::ProducerCMode::RESV;
-            p->addProductionControl( Well::ProducerCMode::RESV );
-            break;
-        case 6:
-            p->controlMode = Well::ProducerCMode::THP;
+        if (rst_well.thp_target != 0) {
+            p->THPTarget = rst_well.thp_target;
             p->addProductionControl( Well::ProducerCMode::THP );
-            break;
-        case 7:
-            p->controlMode = Well::ProducerCMode::BHP;
-            p->addProductionControl( Well::ProducerCMode::BHP );
-            break;
-        default:
-            throw std::invalid_argument("Can convert integer value: " + std::to_string(rst_well.active_control) + " to control type");
+        }
+
+        if (this->status == Well::Status::OPEN) {
+            switch (rst_well.active_control) {
+            case 1:
+                p->controlMode = Well::ProducerCMode::ORAT;
+                break;
+            case 2:
+                p->controlMode = Well::ProducerCMode::WRAT;
+                p->addProductionControl(Well::ProducerCMode::WRAT);
+                break;
+            case 3:
+                p->controlMode = Well::ProducerCMode::GRAT;
+                p->addProductionControl(Well::ProducerCMode::GRAT);
+                break;
+            case 4:
+                p->controlMode = Well::ProducerCMode::LRAT;
+                p->addProductionControl(Well::ProducerCMode::LRAT);
+                break;
+            case 5:
+                p->controlMode = Well::ProducerCMode::RESV;
+                p->addProductionControl(Well::ProducerCMode::RESV);
+                break;
+            case 6:
+                p->controlMode = Well::ProducerCMode::THP;
+                p->addProductionControl(Well::ProducerCMode::THP);
+                break;
+            case 7:
+                p->controlMode = Well::ProducerCMode::BHP;
+                p->addProductionControl(Well::ProducerCMode::BHP);
+                break;
+            default:
+                throw std::invalid_argument("Can not convert integer value: " + std::to_string(rst_well.active_control)
+                                            + " to control type");
+            }
         }
 
         p->addProductionControl(Well::ProducerCMode::BHP);
@@ -222,32 +233,35 @@ Well::Well(const RestartIO::RstWell& rst_well,
         this->updateProduction(std::move(p));
     } else {
         auto i = std::make_shared<WellInjectionProperties>(this->unit_system, wname);
-        // Reverse of function ctrlMode() in AggregateWellData.cpp
+        i->VFPTableNumber = rst_well.vfp_table;
 
-        switch (rst_well.active_control) {
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-            i->controlMode = Well::InjectorCMode::RATE;
-            i->addInjectionControl(Well::InjectorCMode::RATE);
-            break;
-        case 5:
-            i->controlMode = Well::InjectorCMode::RESV;
-            i->addInjectionControl(Well::InjectorCMode::RESV);
-            break;
-        case 6:
-            i->controlMode = Well::InjectorCMode::THP;
-            i->addInjectionControl(Well::InjectorCMode::THP);
-            break;
-        case 7:
-            i->controlMode = Well::InjectorCMode::BHP;
-            break;
-        case -1:
-            i->controlMode = Well::InjectorCMode::GRUP;
-            break;
-        default:
-            throw std::invalid_argument("Could not convert integer value: " + std::to_string(rst_well.active_control) + " to control type");
+        if (this->status == Well::Status::OPEN) {
+            switch (rst_well.active_control) {
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+                i->controlMode = Well::InjectorCMode::RATE;
+                i->addInjectionControl(Well::InjectorCMode::RATE);
+                break;
+            case 5:
+                i->controlMode = Well::InjectorCMode::RESV;
+                i->addInjectionControl(Well::InjectorCMode::RESV);
+                break;
+            case 6:
+                i->controlMode = Well::InjectorCMode::THP;
+                i->addInjectionControl(Well::InjectorCMode::THP);
+                break;
+            case 7:
+                i->controlMode = Well::InjectorCMode::BHP;
+                break;
+            case -1:
+                i->controlMode = Well::InjectorCMode::GRUP;
+                break;
+            default:
+                throw std::invalid_argument(
+                    "Could not convert integer value: " + std::to_string(rst_well.active_control) + " to control type");
+            }
         }
 
         i->injectorType = rst_well.wtype.injector_type();
@@ -261,10 +275,25 @@ Well::Well(const RestartIO::RstWell& rst_well,
         default:
             throw std::invalid_argument("What ...");
         }
+
+        if ((std::abs(rst_well.wrat_target) > 0.0f) ||
+            (std::abs(rst_well.grat_target) > 0.0f))
+            i->addInjectionControl(Well::InjectorCMode::RATE);
+
+        if (std::abs(rst_well.resv_target) > 0.0f) {
+            i->reservoirInjectionRate = rst_well.resv_target;
+            i->addInjectionControl(Well::InjectorCMode::RESV);
+        }
+
         i->addInjectionControl(Well::InjectorCMode::BHP);
         i->BHPTarget = rst_well.bhp_target_float;
         if (this->isAvailableForGroupControl())
             i->addInjectionControl(Well::InjectorCMode::GRUP);
+
+        if (rst_well.thp_target != 0) {
+            i->THPTarget = rst_well.thp_target;
+            i->addInjectionControl(Well::InjectorCMode::THP);
+        }
 
         this->updateInjection(std::move(i));
     }
@@ -318,61 +347,38 @@ Well::Well(const std::string& wname_arg,
     this->updateProduction(p);
 }
 
-Well::Well(const std::string& wname_arg,
-          const std::string& gname,
-          std::size_t init_step_arg,
-          std::size_t insert_index_arg,
-          int headI_arg,
-          int headJ_arg,
-          double ref_depth_arg,
-          const WellType& wtype_arg,
-          const UnitSystem& units,
-          double udq_undefined_arg,
-          Status status_arg,
-          double drainageRadius,
-          bool allowCrossFlow,
-          bool automaticShutIn,
-          const WellGuideRate& guideRate,
-          double efficiencyFactor,
-          double solventFraction,
-          bool predictionMode,
-          std::shared_ptr<WellEconProductionLimits> econLimits,
-          std::shared_ptr<WellFoamProperties> foamProperties,
-          std::shared_ptr<WellPolymerProperties> polymerProperties,
-          std::shared_ptr<WellBrineProperties> brineProperties,
-          std::shared_ptr<WellTracerProperties> tracerProperties,
-          std::shared_ptr<WellConnections> connections_arg,
-          std::shared_ptr<WellProductionProperties> production_arg,
-          std::shared_ptr<WellInjectionProperties> injection_arg,
-          std::shared_ptr<WellSegments> segments_arg) :
-    wname(wname_arg),
-    group_name(gname),
-    init_step(init_step_arg),
-    insert_index(insert_index_arg),
-    headI(headI_arg),
-    headJ(headJ_arg),
-    ref_depth(ref_depth_arg),
-    unit_system(units),
-    udq_undefined(udq_undefined_arg),
-    status(status_arg),
-    drainage_radius(drainageRadius),
-    allow_cross_flow(allowCrossFlow),
-    automatic_shutin(automaticShutIn),
-    wtype(wtype_arg),
-    guide_rate(guideRate),
-    efficiency_factor(efficiencyFactor),
-    solvent_fraction(solventFraction),
-    prediction_mode(predictionMode),
-    econ_limits(econLimits),
-    foam_properties(foamProperties),
-    polymer_properties(polymerProperties),
-    brine_properties(brineProperties),
-    tracer_properties(tracerProperties),
-    connections(connections_arg),
-    production(production_arg),
-    injection(injection_arg),
-    segments(segments_arg)
+Well Well::serializeObject()
 {
+    Well result;
+    result.wname = "test1";
+    result.group_name = "test2";
+    result.init_step = 1;
+    result.insert_index = 2;
+    result.headI = 3;
+    result.headJ = 4;
+    result.ref_depth = 5;
+    result.unit_system = UnitSystem::serializeObject();
+    result.udq_undefined = 6.0;
+    result.status = Status::SHUT;
+    result.drainage_radius = 7.0;
+    result.allow_cross_flow = true;
+    result.automatic_shutin = false;
+    result.wtype = WellType(Phase::WATER);
+    result.guide_rate = WellGuideRate::serializeObject();
+    result.efficiency_factor = 8.0;
+    result.solvent_fraction = 9.0;
+    result.prediction_mode = false;
+    result.econ_limits = std::make_shared<Opm::WellEconProductionLimits>(Opm::WellEconProductionLimits::serializeObject());
+    result.foam_properties = std::make_shared<WellFoamProperties>(WellFoamProperties::serializeObject());
+    result.polymer_properties =  std::make_shared<WellPolymerProperties>(WellPolymerProperties::serializeObject());
+    result.brine_properties = std::make_shared<WellBrineProperties>(WellBrineProperties::serializeObject());
+    result.tracer_properties = std::make_shared<WellTracerProperties>(WellTracerProperties::serializeObject());
+    result.connections = std::make_shared<WellConnections>(WellConnections::serializeObject());
+    result.production = std::make_shared<Well::WellProductionProperties>(Well::WellProductionProperties::serializeObject());
+    result.injection = std::make_shared<Well::WellInjectionProperties>(Well::WellInjectionProperties::serializeObject());
+    result.segments = std::make_shared<WellSegments>(WellSegments::serializeObject());
+
+    return result;
 }
 
 bool Well::updateEfficiencyFactor(double efficiency_factor_arg) {
@@ -628,7 +634,7 @@ bool Well::updateAutoShutin(bool auto_shutin) {
 
 
 bool Well::updateConnections(std::shared_ptr<WellConnections> connections_arg) {
-    connections_arg->order( this->headI, this->headJ );
+    connections_arg->order(  );
     if (*this->connections != *connections_arg) {
         this->connections = connections_arg;
         //if (this->connections->allConnectionsShut()) {}
@@ -1136,6 +1142,10 @@ double Well::temperature() const {
     throw std::runtime_error("Can not ask for temperature in a producer");
 }
 
+std::ostream& operator<<(std::ostream& os, const Well::Status& st) {
+    os << Well::Status2String(st);
+    return os;
+}
 
 std::string Well::Status2String(Well::Status enumValue) {
     switch( enumValue ) {
@@ -1182,7 +1192,7 @@ const std::string Well::InjectorCMode2String( InjectorCMode enumValue ) {
     case InjectorCMode::GRUP:
         return "GRUP";
     default:
-        throw std::invalid_argument("unhandled enum value");
+        throw std::invalid_argument("Unhandled enum value: " + std::to_string(static_cast<int>(enumValue)) + " in InjectorCMode2String");
     }
 }
 
@@ -1200,6 +1210,11 @@ Well::InjectorCMode Well::InjectorCModeFromString(const std::string &stringValue
         return InjectorCMode::GRUP;
     else
         throw std::invalid_argument("Unknown enum state string: " + stringValue);
+}
+
+std::ostream& operator<<(std::ostream& os, const Well::InjectorCMode& cm) {
+    os << Well::InjectorCMode2String(cm);
+    return os;
 }
 
 Well::WELTARGCMode Well::WELTARGCModeFromString(const std::string& string_value) {
@@ -1240,6 +1255,14 @@ Well::WELTARGCMode Well::WELTARGCModeFromString(const std::string& string_value)
 }
 
 
+std::ostream& operator<<(std::ostream& os, const Well::ProducerCMode& cm) {
+    if (cm == Well::ProducerCMode::CMODE_UNDEFINED)
+        os << "UNDEFINED";
+    else
+        os << Well::ProducerCMode2String(cm);
+    return os;
+}
+
 const std::string Well::ProducerCMode2String( ProducerCMode enumValue ) {
     switch( enumValue ) {
     case ProducerCMode::ORAT:
@@ -1261,7 +1284,7 @@ const std::string Well::ProducerCMode2String( ProducerCMode enumValue ) {
     case ProducerCMode::GRUP:
         return "GRUP";
     default:
-        throw std::invalid_argument("unhandled enum value");
+        throw std::invalid_argument("Unhandled enum value: " + std::to_string(static_cast<int>(enumValue)) + " in ProducerCMode2String");
     }
 }
 
@@ -1386,9 +1409,11 @@ int Opm::eclipseControlMode(const Opm::Well::InjectorCMode imode,
 {
     using IMode = ::Opm::Well::InjectorCMode;
     using Val   = ::Opm::RestartIO::Helpers::VectorItems::IWell::Value::WellCtrlMode;
-
     using IType = ::Opm::InjectorType;
 
+    if (wellStatus == ::Opm::Well::Status::SHUT) {
+        return Val::Shut;
+    }
     switch (imode) {
         case IMode::RATE: {
             switch (itype) {
@@ -1419,6 +1444,9 @@ int Opm::eclipseControlMode(const Opm::Well::ProducerCMode pmode,
     using PMode = ::Opm::Well::ProducerCMode;
     using Val   = ::Opm::RestartIO::Helpers::VectorItems::IWell::Value::WellCtrlMode;
 
+    if (wellStatus == ::Opm::Well::Status::SHUT) {
+        return Val::Shut;
+    }
     switch (pmode) {
         case PMode::ORAT: return Val::OilRate;
         case PMode::WRAT: return Val::WatRate;
@@ -1438,6 +1466,19 @@ int Opm::eclipseControlMode(const Opm::Well::ProducerCMode pmode,
 
     return Val::WMCtlUnk;
 }
+
+/*
+  The purpose of this function is to convert OPM well status to an integer value
+  suitable for output in the eclipse restart file. In OPM we have different
+  variables for the wells status and the active control, when this is written to
+  a restart file they are combined to one integer. In OPM a well can have an
+  active control while still being shut, when this is converted to an integer
+  value suitable for the eclipse formatted restart file the value 0 will be used
+  to signal a SHUT well and the active control will be lost.
+
+  In the case of a well which is in state 'STOP' or 'AUTO' an integer
+  corresponding to the currently active control is writte to the restart file.
+*/
 
 int Opm::eclipseControlMode(const Well&         well,
                             const SummaryState& st)

@@ -17,17 +17,17 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-#include <string>
-#include <vector>
-#include <stdexcept>
 #include <iostream>
+#include <stdexcept>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
 #include <opm/common/OpmLog/LogUtil.hpp>
 #include <opm/common/utility/numeric/cmp.hpp>
+#include <opm/common/utility/String.hpp>
 
 #include <opm/parser/eclipse/Python/Python.hpp>
-#include <opm/parser/eclipse/Utility/String.hpp>
 #include <opm/parser/eclipse/Deck/DeckItem.hpp>
 #include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
 #include <opm/parser/eclipse/Deck/DeckRecord.hpp>
@@ -56,6 +56,7 @@
 #include <opm/parser/eclipse/EclipseState/Schedule/OilVaporizationProperties.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/UDQ/UDQConfig.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/UDQ/UDQActive.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/RPTConfig.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/Schedule.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/TimeMap.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/Tuning.hpp>
@@ -136,6 +137,7 @@ std::pair<std::time_t, std::size_t> restart_info(const RestartIO::RstState * rst
                         const Runspec &runspec,
                         const ParseContext& parseContext,
                         ErrorGuard& errors,
+                        [[maybe_unused]] std::shared_ptr<const Python> python,
                         const RestartIO::RstState * rst) :
         m_timeMap( deck , restart_info( rst )),
         m_oilvaporizationproperties( this->m_timeMap, OilVaporizationProperties(runspec.tabdims().getNumPVTTables()) ),
@@ -155,7 +157,8 @@ std::pair<std::time_t, std::size_t> restart_info(const RestartIO::RstState * rst
         m_actions(this->m_timeMap, std::make_shared<Action::Actions>()),
         rft_config(this->m_timeMap),
         m_nupcol(this->m_timeMap, ParserKeywords::NUPCOL::NUM_ITER::defaultValue),
-        restart_config(m_timeMap, deck, parseContext, errors)
+        restart_config(m_timeMap, deck, parseContext, errors),
+        rpt_config(this->m_timeMap, std::make_shared<RPTConfig>())
     {
         addGroup( "FIELD", 0, deck.getActiveUnitSystem());
         if (rst)
@@ -187,8 +190,9 @@ std::pair<std::time_t, std::size_t> restart_info(const RestartIO::RstState * rst
                         const Runspec &runspec,
                         const ParseContext& parseContext,
                         T&& errors,
+                        std::shared_ptr<const Python> python,
                         const RestartIO::RstState * rst) :
-        Schedule(deck, grid, fp, runspec, parseContext, errors, rst)
+        Schedule(deck, grid, fp, runspec, parseContext, errors, python, rst)
     {}
 
 
@@ -196,91 +200,77 @@ std::pair<std::time_t, std::size_t> restart_info(const RestartIO::RstState * rst
                         const EclipseGrid& grid,
                         const FieldPropsManager& fp,
                         const Runspec &runspec,
+                        std::shared_ptr<const Python> python,
                         const RestartIO::RstState * rst) :
-        Schedule(deck, grid, fp, runspec, ParseContext(), ErrorGuard(), rst)
+        Schedule(deck, grid, fp, runspec, ParseContext(), ErrorGuard(), python, rst)
     {}
 
 
-    Schedule::Schedule(const Deck& deck, const EclipseState& es, const ParseContext& parse_context, ErrorGuard& errors, const RestartIO::RstState * rst) :
+Schedule::Schedule(const Deck& deck, const EclipseState& es, const ParseContext& parse_context, ErrorGuard& errors, std::shared_ptr<const Python> python, const RestartIO::RstState * rst) :
         Schedule(deck,
                  es.getInputGrid(),
                  es.fieldProps(),
                  es.runspec(),
                  parse_context,
                  errors,
+                 python,
                  rst)
     {}
 
 
 
     template <typename T>
-    Schedule::Schedule(const Deck& deck, const EclipseState& es, const ParseContext& parse_context, T&& errors, const RestartIO::RstState * rst) :
+    Schedule::Schedule(const Deck& deck, const EclipseState& es, const ParseContext& parse_context, T&& errors, std::shared_ptr<const Python> python, const RestartIO::RstState * rst) :
         Schedule(deck,
                  es.getInputGrid(),
                  es.fieldProps(),
                  es.runspec(),
                  parse_context,
                  errors,
+                 python,
                  rst)
     {}
 
 
+    Schedule::Schedule(const Deck& deck, const EclipseState& es, std::shared_ptr<const Python> python, const RestartIO::RstState * rst) :
+        Schedule(deck, es, ParseContext(), ErrorGuard(), python, rst)
+    {}
+
+
     Schedule::Schedule(const Deck& deck, const EclipseState& es, const RestartIO::RstState * rst) :
-        Schedule(deck, es, ParseContext(), ErrorGuard(), rst)
+        Schedule(deck, es, ParseContext(), ErrorGuard(), std::make_shared<const Python>(), rst)
     {}
 
+    Schedule Schedule::serializeObject()
+    {
+        Schedule result;
+        result.m_timeMap = TimeMap::serializeObject();
+        result.wells_static.insert({"test1", {{std::make_shared<Opm::Well>(Opm::Well::serializeObject())},1}});
+        result.groups.insert({"test2", {{std::make_shared<Opm::Group>(Opm::Group::serializeObject())},1}});
+        result.m_oilvaporizationproperties = {{Opm::OilVaporizationProperties::serializeObject()},1};
+        result.m_events = Events::serializeObject();
+        result.m_modifierDeck = DynamicVector<Deck>({Deck::serializeObject()});
+        result.m_tuning = {{Tuning::serializeObject()}, 1};
+        result.m_messageLimits = MessageLimits::serializeObject();
+        result.m_runspec = Runspec::serializeObject();
+        result.vfpprod_tables = {{1, {{std::make_shared<VFPProdTable>(VFPProdTable::serializeObject())}, 1}}};
+        result.vfpinj_tables = {{2, {{std::make_shared<VFPInjTable>(VFPInjTable::serializeObject())}, 1}}};
+        result.wtest_config = {{std::make_shared<WellTestConfig>(WellTestConfig::serializeObject())}, 1};
+        result.wlist_manager = {{std::make_shared<WListManager>(WListManager::serializeObject())}, 1};
+        result.udq_config = {{std::make_shared<UDQConfig>(UDQConfig::serializeObject())}, 1};
+        result.udq_active = {{std::make_shared<UDQActive>(UDQActive::serializeObject())}, 1};
+        result.guide_rate_config = {{std::make_shared<GuideRateConfig>(GuideRateConfig::serializeObject())}, 1};
+        result.gconsale = {{std::make_shared<GConSale>(GConSale::serializeObject())}, 1};
+        result.gconsump = {{std::make_shared<GConSump>(GConSump::serializeObject())}, 1};
+        result.global_whistctl_mode = {{Well::ProducerCMode::CRAT}, 1};
+        result.m_actions = {{std::make_shared<Action::Actions>(Action::Actions::serializeObject())}, 1};
+        result.rft_config = RFTConfig::serializeObject();
+        result.m_nupcol = {{1}, 1};
+        result.restart_config = RestartConfig::serializeObject();
+        result.wellgroup_events = {{"test", Events::serializeObject()}};
 
-
-    Schedule::Schedule(const TimeMap& timeMap,
-                       const WellMap& wellsStatic,
-                       const GroupMap& group,
-                       const DynamicState<OilVaporizationProperties>& oilVapProps,
-                       const Events& events,
-                       const DynamicVector<Deck>& modifierDeck,
-                       const DynamicState<Tuning>& tuning,
-                       const MessageLimits& messageLimits,
-                       const Runspec& runspec,
-                       const VFPProdMap& vfpProdTables,
-                       const VFPInjMap& vfpInjTables,
-                       const DynamicState<std::shared_ptr<WellTestConfig>>& wtestConfig,
-                       const DynamicState<std::shared_ptr<WListManager>>& wListManager,
-                       const DynamicState<std::shared_ptr<UDQConfig>>& udqConfig,
-                       const DynamicState<std::shared_ptr<UDQActive>>& udqActive,
-                       const DynamicState<std::shared_ptr<GuideRateConfig>>& guideRateConfig,
-                       const DynamicState<std::shared_ptr<GConSale>>& gconSale,
-                       const DynamicState<std::shared_ptr<GConSump>>& gconSump,
-                       const DynamicState<Well::ProducerCMode>& globalWhistCtlMode,
-                       const DynamicState<std::shared_ptr<Action::Actions>>& actions,
-                       const RFTConfig& rftconfig,
-                       const DynamicState<int>& nupCol,
-                       const RestartConfig& rst_config,
-                       const std::map<std::string,Events>& wellGroupEvents) :
-        m_timeMap(timeMap),
-        wells_static(wellsStatic),
-        groups(group),
-        m_oilvaporizationproperties(oilVapProps),
-        m_events(events),
-        m_modifierDeck(modifierDeck),
-        m_tuning(tuning),
-        m_messageLimits(messageLimits),
-        m_runspec(runspec),
-        vfpprod_tables(vfpProdTables),
-        vfpinj_tables(vfpInjTables),
-        wtest_config(wtestConfig),
-        wlist_manager(wListManager),
-        udq_config(udqConfig),
-        udq_active(udqActive),
-        guide_rate_config(guideRateConfig),
-        gconsale(gconSale),
-        gconsump(gconSump),
-        global_whistctl_mode(globalWhistCtlMode),
-        m_actions(actions),
-        rft_config(rftconfig),
-        m_nupcol(nupCol),
-        restart_config(rst_config),
-        wellgroup_events(wellGroupEvents)
-    {}
-
+        return result;
+    }
 
 
     std::time_t Schedule::getStartTime() const {
@@ -475,6 +465,9 @@ std::pair<std::time_t, std::size_t> restart_info(const RestartIO::RstState * rst
         else if (keyword.name() == "MESSAGES")
             handleMESSAGES(keyword, currentStep);
 
+        else if (keyword.name() == "RPTSCHED")
+            handleRPTSCHED(keyword, currentStep);
+
         else if (keyword.name() == "WEFAC")
             handleWEFAC(keyword, currentStep, parseContext, errors);
 
@@ -508,6 +501,13 @@ void Schedule::iterateScheduleSection(const std::string& input_path, const Parse
         const auto& unit_system = section.unitSystem();
         std::vector<std::pair< const DeckKeyword* , size_t> > rftProperties;
         size_t keywordIdx = 0;
+        /*
+          The keywords in the skiprest_whitelist set are loaded from the
+          SCHEDULE section even though the SKIPREST keyword is in action. The
+          full list includes some additional keywords which we do not support at
+          all.
+        */
+        std::unordered_set<std::string> skiprest_whitelist = {"VFPPROD", "VFPINJ", "RPTSCHED", "RPTRST", "TUNING", "MESSAGES"};
 
         size_t currentStep;
         if (this->m_timeMap.skiprest())
@@ -549,7 +549,7 @@ void Schedule::iterateScheduleSection(const std::string& input_path, const Parse
             }
 
             else {
-                if (currentStep >= this->m_timeMap.restart_offset())
+                if (currentStep >= this->m_timeMap.restart_offset() || skiprest_whitelist.count(keyword.name()))
                     this->handleKeyword(input_path, currentStep, section, keywordIdx, keyword, parseContext, errors, grid, fp, unit_system, rftProperties);
                 else
                     OpmLog::info("Skipping keyword: " + keyword.name() + " while loading SCHEDULE section");
@@ -649,7 +649,7 @@ void Schedule::iterateScheduleSection(const std::string& input_path, const Parse
     }
 
     void Schedule::handlePYACTION( const std::string& input_path, const DeckKeyword& keyword, size_t currentStep) {
-        if (!Python::enabled()) {
+        if (!Python::supported()) {
             const auto& loc = keyword.location();
             OpmLog::warning("This version of flow is built without support for Python. Keyword PYACTION in file: " + loc.filename + " line: " + std::to_string(loc.lineno) + " is ignored.");
             return;
@@ -1630,7 +1630,8 @@ void Schedule::iterateScheduleSection(const std::string& input_path, const Parse
                 if (!record.getItem("VOIDAGE_GROUP").defaultApplied(0))
                     voidage_group = record.getItem("VOIDAGE_GROUP").getTrimmedString(0);;
 
-                bool availableForGroupControl = DeckItem::to_bool(record.getItem("FREE").getTrimmedString(0));
+                bool availableForGroupControl = DeckItem::to_bool(record.getItem("FREE").getTrimmedString(0))
+                    && (group_name != "FIELD");
                 //surfaceInjectionRate = injection::rateToSI(surfaceInjectionRate, phase, section.unitSystem());
                 {
                     auto group_ptr = std::make_shared<Group>(this->getGroup(group_name, currentStep));
@@ -1705,7 +1706,8 @@ void Schedule::iterateScheduleSection(const std::string& input_path, const Parse
                     }
                 }
                 auto resv_target = record.getItem("RESERVOIR_FLUID_TARGET").getSIDouble(0);
-                bool availableForGroupControl = DeckItem::to_bool(record.getItem("RESPOND_TO_PARENT").getTrimmedString(0));
+                bool availableForGroupControl = DeckItem::to_bool(record.getItem("RESPOND_TO_PARENT").getTrimmedString(0))
+                    && (group_name != "FIELD");
                 {
                     auto group_ptr = std::make_shared<Group>(this->getGroup(group_name, currentStep));
                     Group::GroupProductionProperties production;
@@ -1959,6 +1961,10 @@ void Schedule::iterateScheduleSection(const std::string& input_path, const Parse
                 fptr( this->m_messageLimits , currentStep , value );
             }
         }
+    }
+
+    void Schedule::handleRPTSCHED( const DeckKeyword& keyword, size_t currentStep) {
+        this->rpt_config.update(currentStep, std::make_shared<RPTConfig>(keyword));
     }
 
     void Schedule::handleCOMPDAT( const DeckKeyword& keyword, size_t currentStep, const EclipseGrid& grid, const FieldPropsManager& fp, const ParseContext& parseContext, ErrorGuard& errors) {
@@ -2840,6 +2846,11 @@ void Schedule::invalidNamePattern( const std::string& namePattern,  std::size_t 
         return *ptr;
     }
 
+    const RPTConfig& Schedule::report_config(size_t timeStep) const {
+        const auto& ptr = this->rpt_config.get(timeStep);
+        return *ptr;
+    }
+
 
     size_t Schedule::size() const {
         return this->m_timeMap.size();
@@ -2944,6 +2955,7 @@ void Schedule::invalidNamePattern( const std::string& namePattern,  std::size_t 
                compareDynState(this->gconsump, data.gconsump) &&
                this->global_whistctl_mode == data.global_whistctl_mode &&
                compareDynState(this->m_actions, data.m_actions) &&
+               compareDynState(this->rpt_config, data.rpt_config) &&
                rft_config  == data.rft_config &&
                this->m_nupcol == data.m_nupcol &&
                this->restart_config == data.restart_config &&
@@ -2980,7 +2992,7 @@ void Schedule::load_rst(const RestartIO::RstState& rst_state, const EclipseGrid&
         std::unordered_map<int, Opm::Segment> segments;
 
         for (const auto& rst_conn : rst_well.connections)
-            connections.emplace_back(rst_conn, connections.size(), grid, fp);
+            connections.emplace_back(rst_conn, grid, fp);
 
         for (const auto& rst_segment : rst_well.segments) {
             Opm::Segment segment(rst_segment);
@@ -2990,15 +3002,9 @@ void Schedule::load_rst(const RestartIO::RstState& rst_state, const EclipseGrid&
         for (auto& connection : connections) {
             int segment_id = connection.segment();
             if (segment_id > 0) {
-                std::size_t compsegs_insert_index = 0;
-                double segment_start = 0;
-                double segment_end = 0;
                 const auto& segment = segments.at(segment_id);
-                connection.updateSegment(segment.segmentNumber(),
-                                         segment.depth(),
-                                         compsegs_insert_index,
-                                         segment_start,
-                                         segment_end);
+                connection.updateSegmentRST(segment.segmentNumber(),
+                                            segment.depth());
             }
         }
 
@@ -3009,9 +3015,19 @@ void Schedule::load_rst(const RestartIO::RstState& rst_state, const EclipseGrid&
 
         if (!segments.empty()) {
             std::vector<Segment> segments_list;
+            /*
+              The ordering of the segments in the WellSegments structure seems a
+              bit random; in some parts of the code the segment_number seems to
+              be treated like a random integer ID, whereas in other parts it
+              seems to be treated like a running index. Here the segments in
+              WellSegments are sorted according to the segment number - observe
+              that this is somewhat important because the first top segment is
+              treated differently from the other segment.
+            */
             for (const auto& segment_pair : segments)
                 segments_list.push_back( std::move(segment_pair.second) );
 
+            std::sort( segments_list.begin(), segments_list.end(),[](const Segment& seg1, const Segment& seg2) { return seg1.segmentNumber() < seg2.segmentNumber(); } );
             auto comp_pressure_drop = WellSegments::CompPressureDrop::HFA;
             std::shared_ptr<Opm::WellSegments> well_segments = std::make_shared<Opm::WellSegments>(comp_pressure_drop, segments_list);
             well.updateSegments( std::move(well_segments) );
@@ -3091,6 +3107,13 @@ std::string well_msg(const std::string& well, const std::string& msg) {
     return "Well: " + well + " " + msg;
 }
 
+std::string well_segment_msg(const std::string& well, int segment_number, const std::string& msg) {
+    return "Well: " + well + " Segment: " + std::to_string(segment_number) + " " + msg;
+}
+
+std::string well_connection_msg(const std::string& well, const Connection& conn, const std::string& msg) {
+    return "Well: " + well + " Connection: " + std::to_string(conn.getI()) + ", " + std::to_string(conn.getJ()) + ", " + std::to_string(conn.getK()) + "  " + msg;
+}
 
 }
 
@@ -3124,26 +3147,24 @@ bool Schedule::cmp(const Schedule& sched1, const Schedule& sched2, std::size_t r
             for (std::size_t icon = 0; icon < connections1.size(); icon++) {
                 const auto& conn1 = connections1[icon];
                 const auto& conn2 = connections2[icon];
-                well_count += not_equal( conn1.getI(), conn2.getI(), well_msg(well1.name(), "Connection: I"));
-                well_count += not_equal( conn1.getI() , conn2.getI() , well_msg(well1.name(), "Connection: I"));
-                well_count += not_equal( conn1.getJ() , conn2.getJ() , well_msg(well1.name(), "Connection: J"));
-                well_count += not_equal( conn1.getK() , conn2.getK() , well_msg(well1.name(), "Connection: K"));
-                well_count += not_equal( conn1.state() , conn2.state(), well_msg(well1.name(), "Connection: State"));
-                well_count += not_equal( conn1.dir() , conn2.dir(), well_msg(well1.name(), "Connection: dir"));
-                well_count += not_equal( conn1.complnum() , conn2.complnum(), well_msg(well1.name(), "connection: complnum"));
-                well_count += not_equal( conn1.segment() , conn2.segment(), well_msg(well1.name(), "Connection: segment"));
-                well_count += not_equal( conn1.kind() , conn2.kind(), well_msg(well1.name(), "Connection: CFKind"));
-                well_count += not_equal( conn1.getSeqIndex(), conn2.getSeqIndex(), well_msg(well1.name(), "Connection: insertIndex"));
+                well_count += not_equal( conn1.getI(), conn2.getI(), well_connection_msg(well1.name(), conn1, "I"));
+                well_count += not_equal( conn1.getJ() , conn2.getJ() , well_connection_msg(well1.name(), conn1, "J"));
+                well_count += not_equal( conn1.getK() , conn2.getK() , well_connection_msg(well1.name(), conn1, "K"));
+                well_count += not_equal( conn1.state() , conn2.state(), well_connection_msg(well1.name(), conn1, "State"));
+                well_count += not_equal( conn1.dir() , conn2.dir(), well_connection_msg(well1.name(), conn1, "dir"));
+                well_count += not_equal( conn1.complnum() , conn2.complnum(), well_connection_msg(well1.name(), conn1, "complnum"));
+                well_count += not_equal( conn1.segment() , conn2.segment(), well_connection_msg(well1.name(), conn1, "segment"));
+                well_count += not_equal( conn1.kind() , conn2.kind(), well_connection_msg(well1.name(), conn1, "CFKind"));
+                well_count += not_equal( conn1.sort_value(), conn2.sort_value(), well_connection_msg(well1.name(), conn1, "sort_value"));
 
 
-                well_count += not_equal( conn1.CF(), conn2.CF(), well_msg(well1.name(), "Connection: CF"));
-                well_count += not_equal( conn1.Kh(), conn2.Kh(), well_msg(well1.name(), "Connection: Kh"));
-                well_count += not_equal( conn1.rw(), conn2.rw(), well_msg(well1.name(), "Connection: rw"));
-                well_count += not_equal( conn1.depth(), conn2.depth(), well_msg(well1.name(), "Connection: depth"));
+                well_count += not_equal( conn1.CF(), conn2.CF(), well_connection_msg(well1.name(), conn1, "CF"));
+                well_count += not_equal( conn1.Kh(), conn2.Kh(), well_connection_msg(well1.name(), conn1, "Kh"));
+                well_count += not_equal( conn1.rw(), conn2.rw(), well_connection_msg(well1.name(), conn1, "rw"));
+                well_count += not_equal( conn1.depth(), conn2.depth(), well_connection_msg(well1.name(), conn1, "depth"));
 
-                well_count += not_equal( conn1.r0(), conn2.r0(), well_msg(well1.name(), "Connection: r0"));
-                well_count += not_equal( conn1.skinFactor(), conn2.skinFactor(), well_msg(well1.name(), "Connection: skinFactor"));
-                well_count += not_equal( conn1.wellPi(), conn2.wellPi(), well_msg(well1.name(), "Connection: PI"));
+                //well_count += not_equal( conn1.r0(), conn2.r0(), well_connection_msg(well1.name(), conn1, "r0"));
+                well_count += not_equal( conn1.skinFactor(), conn2.skinFactor(), well_connection_msg(well1.name(), conn1, "skinFactor"));
 
             }
         }
@@ -3160,22 +3181,23 @@ bool Schedule::cmp(const Schedule& sched1, const Schedule& sched2, std::size_t r
             for (std::size_t iseg=0; iseg < segments1.size(); iseg++) {
                 const auto& segment1 = segments1[iseg];
                 const auto& segment2 = segments2[iseg];
-                well_count += not_equal(segment1.segmentNumber(), segment2.segmentNumber(), well_msg(well1.name(), "Segment: segmentNumber"));
-                well_count += not_equal(segment1.branchNumber(), segment2.segmentNumber(), well_msg(well1.name(), "Segment: segmentNumber"));
-                well_count += not_equal(segment1.outletSegment(), segment2.outletSegment(), well_msg(well1.name(), "Segments: outletSegment"));
-                well_count += not_equal(segment1.totalLength(), segment2.totalLength(), well_msg(well1.name(), "Segments: totalLength"));
-                well_count += not_equal(segment1.depth(), segment2.depth(), well_msg(well1.name(), "Segments: depth"));
-                well_count += not_equal(segment1.internalDiameter(), segment2.internalDiameter(), well_msg(well1.name(), "Segments: internalDiameter"));
-                well_count += not_equal(segment1.roughness(), segment2.roughness(), well_msg(well1.name(), "Segments: roughness"));
-                well_count += not_equal(segment1.crossArea(), segment2.crossArea(), well_msg(well1.name(), "Segments: crossArea"));
-                well_count += not_equal(segment1.volume(), segment2.volume(), well_msg(well1.name(), "Segments: volume"));
+                //const auto& segment2 = segments2.getFromSegmentNumber(segment1.segmentNumber());
+                well_count += not_equal(segment1.segmentNumber(), segment2.segmentNumber(), well_segment_msg(well1.name(), segment1.segmentNumber(), "segmentNumber"));
+                well_count += not_equal(segment1.branchNumber(), segment2.branchNumber(), well_segment_msg(well1.name(), segment1.segmentNumber(), "branchNumber"));
+                well_count += not_equal(segment1.outletSegment(), segment2.outletSegment(), well_segment_msg(well1.name(), segment1.segmentNumber(), "outletSegment"));
+                well_count += not_equal(segment1.totalLength(), segment2.totalLength(), well_segment_msg(well1.name(), segment1.segmentNumber(), "totalLength"));
+                well_count += not_equal(segment1.depth(), segment2.depth(), well_segment_msg(well1.name(), segment1.segmentNumber(), "depth"));
+                well_count += not_equal(segment1.internalDiameter(), segment2.internalDiameter(), well_segment_msg(well1.name(), segment1.segmentNumber(), "internalDiameter"));
+                well_count += not_equal(segment1.roughness(), segment2.roughness(), well_segment_msg(well1.name(), segment1.segmentNumber(), "roughness"));
+                well_count += not_equal(segment1.crossArea(), segment2.crossArea(), well_segment_msg(well1.name(), segment1.segmentNumber(), "crossArea"));
+                well_count += not_equal(segment1.volume(), segment2.volume(), well_segment_msg(well1.name(), segment1.segmentNumber(), "volume"));
             }
         }
 
+        well_count += not_equal(well1.getStatus(), well2.getStatus(), well_msg(well1.name(), "status"));
         {
             const auto& prod1 = well1.getProductionProperties();
             const auto& prod2 = well2.getProductionProperties();
-
             well_count += not_equal(prod1.name, prod2.name , well_msg(well1.name(), "Prod: name"));
             well_count += not_equal(prod1.OilRate, prod2.OilRate, well_msg(well1.name(), "Prod: OilRate"));
             well_count += not_equal(prod1.GasRate, prod2.GasRate, well_msg(well1.name(), "Prod: GasRate"));
@@ -3184,15 +3206,18 @@ bool Schedule::cmp(const Schedule& sched1, const Schedule& sched2, std::size_t r
             well_count += not_equal(prod1.ResVRate, prod2.ResVRate, well_msg(well1.name(), "Prod: ResVRate"));
             well_count += not_equal(prod1.BHPTarget, prod2.BHPTarget, well_msg(well1.name(), "Prod: BHPTarget"));
             well_count += not_equal(prod1.THPTarget, prod2.THPTarget, well_msg(well1.name(), "Prod: THPTarget"));
-            well_count += not_equal(prod1.bhp_hist_limit, prod2.bhp_hist_limit, well_msg(well1.name(), "Prod: bhp_hist_limit"));
-            well_count += not_equal(prod1.thp_hist_limit, prod2.thp_hist_limit, well_msg(well1.name(), "Prod: thp_hist_limit"));
-            well_count += not_equal(prod1.BHPH, prod2.BHPH, well_msg(well1.name(), "Prod: BHPH"));
-            well_count += not_equal(prod1.THPH, prod2.THPH, well_msg(well1.name(), "Prod: THPH"));
             well_count += not_equal(prod1.VFPTableNumber, prod2.VFPTableNumber, well_msg(well1.name(), "Prod: VFPTableNumber"));
             well_count += not_equal(prod1.ALQValue, prod2.ALQValue, well_msg(well1.name(), "Prod: ALQValue"));
-            well_count += not_equal(prod1.productionControls(), prod2.productionControls(), well_msg(well1.name(), "Prod: productionControls"));
             well_count += not_equal(prod1.predictionMode, prod2.predictionMode, well_msg(well1.name(), "Prod: predictionMode"));
-            well_count += not_equal(prod1.controlMode, prod2.controlMode, well_msg(well1.name(), "Prod: controlMode"));
+            if (!prod1.predictionMode) {
+                well_count += not_equal(prod1.bhp_hist_limit, prod2.bhp_hist_limit, well_msg(well1.name(), "Prod: bhp_hist_limit"));
+                well_count += not_equal(prod1.thp_hist_limit, prod2.thp_hist_limit, well_msg(well1.name(), "Prod: thp_hist_limit"));
+                well_count += not_equal(prod1.BHPH, prod2.BHPH, well_msg(well1.name(), "Prod: BHPH"));
+                well_count += not_equal(prod1.THPH, prod2.THPH, well_msg(well1.name(), "Prod: THPH"));
+            }
+            well_count += not_equal(prod1.productionControls(), prod2.productionControls(), well_msg(well1.name(), "Prod: productionControls"));
+            if (well1.getStatus() == Well::Status::OPEN)
+                well_count += not_equal(prod1.controlMode, prod2.controlMode, well_msg(well1.name(), "Prod: controlMode"));
             well_count += not_equal(prod1.whistctl_cmode, prod2.whistctl_cmode, well_msg(well1.name(), "Prod: whistctl_cmode"));
         }
         {

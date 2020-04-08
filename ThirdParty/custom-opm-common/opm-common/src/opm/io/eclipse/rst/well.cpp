@@ -16,7 +16,7 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <opm/parser/eclipse/Utility/String.hpp>
+#include <opm/common/utility/String.hpp>
 
 #include <opm/io/eclipse/rst/header.hpp>
 #include <opm/io/eclipse/rst/connection.hpp>
@@ -72,7 +72,7 @@ RstWell::RstWell(const ::Opm::UnitSystem& unit_system,
     grat_target(         unit_system.to_si(M::identity,              swel_value(swel[VI::SWell::GasRateTarget]))),
     lrat_target(         unit_system.to_si(M::identity,              swel_value(swel[VI::SWell::LiqRateTarget]))),
     resv_target(         unit_system.to_si(M::identity,              swel_value(swel[VI::SWell::ResVRateTarget]))),
-    thp_target(          unit_system.to_si(M::identity,              swel[VI::SWell::THPTarget])),
+    thp_target(          unit_system.to_si(M::identity,              swel_value(swel[VI::SWell::THPTarget]))),
     bhp_target_float(    unit_system.to_si(M::identity,              swel[VI::SWell::BHPTarget])),
     hist_lrat_target(    unit_system.to_si(M::liquid_surface_rate,   swel[VI::SWell::HistLiqRateTarget])),
     hist_grat_target(    unit_system.to_si(M::gas_surface_rate,      swel[VI::SWell::HistGasRateTarget])),
@@ -94,6 +94,7 @@ RstWell::RstWell(const ::Opm::UnitSystem& unit_system,
     void_total(          unit_system.to_si(M::volume,                xwel[VI::XWell::VoidPrTotal])),
     water_inj_total(     unit_system.to_si(M::liquid_surface_volume, xwel[VI::XWell::WatInjTotal])),
     gas_inj_total(       unit_system.to_si(M::gas_surface_volume,    xwel[VI::XWell::GasInjTotal])),
+    void_inj_total(      unit_system.to_si(M::volume,                xwel[VI::XWell::VoidInjTotal])),
     gas_fvf(                                                         xwel[VI::XWell::GasFVF]),
     bhp_target_double(   unit_system.to_si(M::pressure,              xwel[VI::XWell::BHPTarget])),
     hist_oil_total(      unit_system.to_si(M::liquid_surface_volume, xwel[VI::XWell::HistOilPrTotal])),
@@ -108,7 +109,7 @@ RstWell::RstWell(const ::Opm::UnitSystem& unit_system,
         std::size_t icon_offset = ic * header.niconz;
         std::size_t scon_offset = ic * header.nsconz;
         std::size_t xcon_offset = ic * header.nxconz;
-        this->connections.emplace_back( unit_system, icon + icon_offset, scon + scon_offset, xcon + xcon_offset);
+        this->connections.emplace_back( unit_system, ic, header.nsconz, icon + icon_offset, scon + scon_offset, xcon + xcon_offset);
     }
 }
 
@@ -134,10 +135,11 @@ RstWell::RstWell(const ::Opm::UnitSystem& unit_system,
         for (int is=0; is < header.nsegmx; is++) {
             std::size_t iseg_offset = header.nisegz * (is + (this->msw_index - 1) * header.nsegmx);
             std::size_t rseg_offset = header.nrsegz * (is + (this->msw_index - 1) * header.nsegmx);
-            auto segment_number = iseg[iseg_offset + VI::ISeg::SegNo];
-            if (segment_number != 0) {
+            auto other_segment_number = iseg[iseg_offset + VI::ISeg::SegNo];
+            if (other_segment_number != 0) {
+                auto segment_number = is + 1;
                 segment_map.insert({segment_number, this->segments.size()});
-                this->segments.emplace_back( unit_system, iseg.data() + iseg_offset, rseg.data() + rseg_offset);
+                this->segments.emplace_back( unit_system, segment_number, iseg.data() + iseg_offset, rseg.data() + rseg_offset);
             }
         }
 

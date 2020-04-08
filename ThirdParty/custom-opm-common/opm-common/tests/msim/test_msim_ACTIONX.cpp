@@ -25,7 +25,9 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <memory>
 
+#include <opm/parser/eclipse/Python/Python.hpp>
 #include <opm/parser/eclipse/EclipseState/Grid/EclipseGrid.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/SummaryState.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/Schedule.hpp>
@@ -51,13 +53,15 @@ namespace {
 struct test_data {
     Deck deck;
     EclipseState state;
+    std::shared_ptr<Python> python;
     Schedule schedule;
     SummaryConfig summary_config;
 
     test_data(const std::string& deck_string) :
         deck( Parser().parseString(deck_string)),
         state( this->deck ),
-        schedule( this->deck, this->state),
+        python( std::make_shared<Python>() ),
+        schedule( this->deck, this->state, this->python),
         summary_config( this->deck, this->schedule, this->state.getTableManager())
     {
         auto& ioconfig = this->state.getIOConfig();
@@ -313,8 +317,9 @@ BOOST_AUTO_TEST_CASE(UDQ_WUWCT) {
                 std::string wuwct_key = std::string("WUWCT:") + well;
                 std::string wopr_key  = std::string("WOPR:") + well;
 
-                BOOST_CHECK_EQUAL( ecl_sum_get_general_var(ecl_sum, step, wwct_key.c_str()),
-                                   ecl_sum_get_general_var(ecl_sum, step, wuwct_key.c_str()));
+                if (ecl_sum_get_general_var(ecl_sum, step, wwct_key.c_str()) != 0)
+                    BOOST_CHECK_EQUAL( ecl_sum_get_general_var(ecl_sum, step, wwct_key.c_str()),
+                                       ecl_sum_get_general_var(ecl_sum, step, wuwct_key.c_str()));
 
                 wopr_sum += ecl_sum_get_general_var(ecl_sum, step , wopr_key.c_str());
             }

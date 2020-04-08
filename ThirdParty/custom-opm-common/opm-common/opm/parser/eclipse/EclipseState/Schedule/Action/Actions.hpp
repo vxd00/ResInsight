@@ -40,6 +40,9 @@ class Actions {
 public:
     Actions() = default;
     Actions(const std::vector<ActionX>& action, const std::vector<PyAction>& pyactions);
+
+    static Actions serializeObject();
+
     size_t size() const;
     int max_input_lines() const;
     bool empty() const;
@@ -49,6 +52,7 @@ public:
     const ActionX& get(const std::string& name) const;
     const ActionX& get(std::size_t index) const;
     std::vector<const ActionX *> pending(std::time_t sim_time) const;
+    std::vector<const PyAction *> pending_python() const;
 
     std::vector<ActionX>::const_iterator begin() const;
     std::vector<ActionX>::const_iterator end() const;

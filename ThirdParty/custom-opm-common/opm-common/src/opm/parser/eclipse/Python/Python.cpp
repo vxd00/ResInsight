@@ -24,23 +24,31 @@
 
 namespace Opm {
 
-Python::Python() :
-    interp(std::make_shared<PythonInterp>())
+Python::Python(Enable enable) :
+    interp( std::make_shared<PythonInterp>(false))
 {
+    if (enable == Enable::OFF)
+        return;
+
+    if (enable == Enable::ON)
+        this->interp = std::make_shared<PythonInterp>(true);
+    else {
+        try {
+            this->interp = std::make_shared<PythonInterp>(true);
+        } catch(const std::logic_error &exc) {}
+    }
 }
+
+bool Python::supported() {
+    return PythonInterp::supported();
+}
+
 
 bool Python::exec(const std::string& python_code) const {
     this->interp->exec(python_code);
     return true;
 }
 
-bool Python::enabled() {
-#ifdef EMBEDDED_PYTHON
-    return true;
-#else
-    return false;
-#endif
-}
 
 bool Python::exec(const std::string& python_code, const Parser& parser, Deck& deck) const {
     this->interp->exec(python_code, parser, deck);
@@ -53,21 +61,8 @@ bool Python::exec(const Action::PyAction& py_action, EclipseState& ecl_state, Sc
 }
 
 
-Python::operator bool() const {
-    if (this->interp)
-        return bool( *this->interp );
-    else
-        return false;
+bool Python::enabled() const {
+    return bool( *this->interp );
 }
-
-std::unique_ptr<Python> PythonInstance() {
-    #ifdef EMBEDDED_PYTHON
-    if (Py_IsInitialized())
-        return NULL;
-    #endif
-
-    return std::make_unique<Python>();
-}
-
 
 }

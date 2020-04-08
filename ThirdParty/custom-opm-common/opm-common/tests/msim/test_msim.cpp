@@ -27,6 +27,7 @@
 
 #include <opm/common/utility/FileSystem.hpp>
 
+#include <opm/parser/eclipse/Python/Python.hpp>
 #include <opm/io/eclipse/ERst.hpp>
 #include <opm/io/eclipse/ESmry.hpp>
 
@@ -69,13 +70,15 @@ bool is_file(const Opm::filesystem::path& name)
 
 BOOST_AUTO_TEST_CASE(RUN) {
     Parser parser;
+    auto python = std::make_shared<Python>();
     Deck deck = parser.parseFile("SPE1CASE1.DATA");
     EclipseState state(deck);
-    Schedule schedule(deck, state);
+    Schedule schedule(deck, state, python);
     SummaryConfig summary_config(deck, schedule, state.getTableManager());
     msim msim(state);
 
     msim.well_rate("PROD", data::Rates::opt::oil, prod_opr);
+    msim.well_rate("RFT", data::Rates::opt::oil, prod_opr);
     msim.solution("PRESSURE", pressure);
     {
         const WorkArea work_area("test_msim");
@@ -83,7 +86,7 @@ BOOST_AUTO_TEST_CASE(RUN) {
 
         msim.run(schedule, io, false);
 
-        for (const auto& fname : {"SPE1CASE1.INIT", "SPE1CASE1.UNRST", "SPE1CASE1.EGRID", "SPE1CASE1.SMSPEC", "SPE1CASE1.UNSMRY"})
+        for (const auto& fname : {"SPE1CASE1.INIT", "SPE1CASE1.UNRST", "SPE1CASE1.EGRID", "SPE1CASE1.SMSPEC", "SPE1CASE1.UNSMRY", "SPE1CASE1.RSM"})
             BOOST_CHECK( is_file( fname ));
 
         {
@@ -94,6 +97,18 @@ BOOST_AUTO_TEST_CASE(RUN) {
             for (auto nstep = time.size(), time_index=0*nstep; time_index < nstep; time_index++) {
                 double seconds_elapsed = time[time_index] * 86400;
                 BOOST_CHECK_CLOSE(seconds_elapsed, press[time_index], 1e-3);
+            }
+
+            const auto& dates = smry.dates();
+            const auto& day   = smry.get("DAY");
+            const auto& month = smry.get("MONTH");
+            const auto& year  = smry.get("YEAR");
+
+            for (auto nstep = dates.size(), time_index=0*nstep; time_index < nstep; time_index++) {
+                auto ts = TimeStampUTC( std::chrono::system_clock::to_time_t( dates[time_index]) );
+                BOOST_CHECK_EQUAL( ts.day(), day[time_index]);
+                BOOST_CHECK_EQUAL( ts.month(), month[time_index]);
+                BOOST_CHECK_EQUAL( ts.year(), year[time_index]);
             }
         }
 
@@ -107,6 +122,12 @@ BOOST_AUTO_TEST_CASE(RUN) {
                 // DOUBHEAD[0] is elapsed time in days since start of simulation.
                 BOOST_CHECK_CLOSE( press[0], dh[0] * 86400, 1e-3 );
             }
+
+            const int report_step = 50;
+            const auto& rst_state = Opm::RestartIO::RstState::load(rst, report_step);
+            Schedule sched_rst(deck, state, python, &rst_state);
+            const auto& rft_well = sched_rst.getWell("RFT", report_step);
+            BOOST_CHECK(rft_well.getStatus() == Well::Status::SHUT);
         }
     }
 }

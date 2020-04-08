@@ -82,6 +82,11 @@ namespace {
         "MSUMLINS","MSUMNEWT","TIMESTEP","TCPUTS","TCPUDAY","STEPTYPE","TELAPLIN"
     };
 
+    const std::vector<std::string> DATE_keywords = {
+         "DAY", "MONTH", "YEAR"
+    };
+
+
     /*
       The variable type 'ECL_SMSPEC_MISC_TYPE' is a catch-all variable
       type, and will by default internalize keywords like 'ALL' and
@@ -89,6 +94,7 @@ namespace {
       be included.
     */
     const std::map<std::string, std::vector<std::string>> meta_keywords = {{"PERFORMA", PERFORMA_keywords},
+                                                                           {"DATE", DATE_keywords},
                                                                            {"ALL", ALL_keywords},
                                                                            {"FMWSET", FMWSET_keywords},
                                                                            {"GMWSET", GMWSET_keywords}};
@@ -712,6 +718,7 @@ inline void keywordMISC( SummaryConfig::keyword_list& list,
 
     std::string to_string(const SummaryConfigNode::Category cat) {
         switch( cat ) {
+            case SummaryConfigNode::Category::Aquifer: return "Aquifer";
             case SummaryConfigNode::Category::Well: return "Well";
             case SummaryConfigNode::Category::Group: return "Group";
             case SummaryConfigNode::Category::Field: return "Field";
@@ -828,6 +835,7 @@ SummaryConfigNode::Category parseKeywordCategory(const std::string& keyword) {
     if (is_special(keyword)) { return Cat::Miscellaneous; }
 
     switch (keyword[0]) {
+        case 'A': return Cat::Aquifer;
         case 'W': return Cat::Well;
         case 'G': return Cat::Group;
         case 'F': return Cat::Field;
@@ -847,6 +855,20 @@ SummaryConfigNode::SummaryConfigNode(std::string keyword, const Category cat, Lo
     category_(cat),
     loc(std::move(loc_arg))
 {}
+
+SummaryConfigNode SummaryConfigNode::serializeObject()
+{
+    SummaryConfigNode result;
+    result.keyword_ = "test1";
+    result.category_ = Category::Region;
+    result.loc = Location::serializeObject();
+    result.type_ = Type::Pressure;
+    result.name_ = "test2";
+    result.number_ = 2;
+    result.userDefined_ = true;
+
+    return result;
+}
 
 SummaryConfigNode& SummaryConfigNode::parameterType(const Type type)
 {
@@ -883,6 +905,7 @@ std::string SummaryConfigNode::uniqueNodeKey() const
     case SummaryConfigNode::Category::Miscellaneous:
         return this->keyword();
 
+    case SummaryConfigNode::Category::Aquifer: [[fallthrough]];
     case SummaryConfigNode::Category::Region: [[fallthrough]];
     case SummaryConfigNode::Category::Block:
         return this->keyword() + ':' + std::to_string(this->number());
@@ -915,6 +938,7 @@ bool operator==(const SummaryConfigNode& lhs, const SummaryConfigNode& rhs)
             // Equal if associated to same named entity
             return lhs.namedEntity() == rhs.namedEntity();
 
+        case SummaryConfigNode::Category::Aquifer: [[fallthrough]];
         case SummaryConfigNode::Category::Region: [[fallthrough]];
         case SummaryConfigNode::Category::Block:
             // Equal if associated to same numeric entity
@@ -950,6 +974,7 @@ bool operator<(const SummaryConfigNode& lhs, const SummaryConfigNode& rhs)
             // Ordering determined by namedEntityd entity
             return lhs.namedEntity() < rhs.namedEntity();
 
+        case SummaryConfigNode::Category::Aquifer: [[fallthrough]];
         case SummaryConfigNode::Category::Region: [[fallthrough]];
         case SummaryConfigNode::Category::Block:
             // Ordering determined by numeric entity
@@ -1045,6 +1070,15 @@ SummaryConfig::SummaryConfig(const keyword_list& kwds,
     keywords(kwds), short_keywords(shortKwds), summary_keywords(smryKwds)
 {}
 
+SummaryConfig SummaryConfig::serializeObject()
+{
+    SummaryConfig result;
+    result.keywords = {SummaryConfigNode::serializeObject()};
+    result.short_keywords = {"test1"};
+    result.summary_keywords = {"test2"};
+
+    return result;
+}
 
 SummaryConfig::const_iterator SummaryConfig::begin() const {
     return this->keywords.cbegin();

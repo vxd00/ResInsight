@@ -14,6 +14,7 @@
 #include <opm/output/eclipse/InteHEAD.hpp>
 #include <opm/output/eclipse/VectorItems/intehead.hpp>
 #include <opm/output/eclipse/DoubHEAD.hpp>
+#include <opm/parser/eclipse/Python/Python.hpp>
 
 #include <opm/parser/eclipse/EclipseState/Schedule/UDQ/UDQInput.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/UDQ/UDQActive.hpp>
@@ -109,12 +110,14 @@ struct SimulationCase
     explicit SimulationCase(const Opm::Deck& deck)
         : es   { deck }
         , grid { deck }
-        , sched{ deck, es }
+        , python { std::make_shared<Opm::Python>()}
+        , sched{ deck, es, python }
     {}
 
     // Order requirement: 'es' must be declared/initialised before 'sched'.
     Opm::EclipseState es;
     Opm::EclipseGrid  grid;
+    std::shared_ptr<Opm::Python> python;
     Opm::Schedule     sched;
 
 };
@@ -148,8 +151,10 @@ BOOST_AUTO_TEST_CASE (Declared_UDQ_data)
         };
     
     double secs_elapsed = 3.1536E07;
-    const auto ih = Opm::RestartIO::Helpers::createInteHead(es, grid, sched,
-                                                secs_elapsed, rptStep, rptStep);
+    const auto ih = Opm::RestartIO::Helpers::
+        createInteHead(es, grid, sched, secs_elapsed,
+                       rptStep, rptStep, rptStep);
+
     //set dummy value for next_step_size 
     const double next_step_size= 0.1;
     const auto dh = Opm::RestartIO::Helpers::createDoubHead(es, sched, rptStep, 

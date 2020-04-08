@@ -1,8 +1,16 @@
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 #include <opm/parser/eclipse/EclipseState/EndpointScaling.hpp>
-#include <opm/parser/eclipse/Utility/String.hpp>
+#include <opm/common/utility/String.hpp>
 
 namespace Opm {
+
+EndpointScaling EndpointScaling::serializeObject()
+{
+    EndpointScaling result;
+    result.options = std::bitset<4>{13};
+
+    return result;
+}
 
 EndpointScaling::operator bool() const noexcept {
     return this->options[ static_cast< ue >( option::any ) ];
@@ -120,10 +128,4 @@ EndpointScaling::EndpointScaling( const Deck& deck ) {
     }
 }
 
-EndpointScaling::EndpointScaling(const std::bitset<4>& opts) :
-    options(opts)
-{
 }
-
-}
-
