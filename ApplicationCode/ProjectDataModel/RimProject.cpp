@@ -76,6 +76,7 @@
 #include "RimUserDefinedPolylinesAnnotation.h"
 #include "RimValveTemplate.h"
 #include "RimValveTemplateCollection.h"
+#include "RimVfpPlotCollection.h"
 #include "RimViewLinker.h"
 #include "RimViewLinkerCollection.h"
 #include "RimViewWindow.h"
@@ -1359,6 +1360,11 @@ void RimProject::defineUiTreeOrdering( caf::PdmUiTreeOrdering& uiTreeOrdering, Q
                  !mainPlotCollection->multiPlotCollection()->multiPlots().empty() )
             {
                 itemCollection->add( mainPlotCollection->multiPlotCollection() );
+            }
+
+            if ( mainPlotCollection->vfpPlotCollection() )
+            {
+                itemCollection->add( mainPlotCollection->vfpPlotCollection() );
             }
         }
 

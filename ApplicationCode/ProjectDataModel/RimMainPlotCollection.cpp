@@ -32,6 +32,7 @@
 #include "RimSummaryAddress.h"
 #include "RimSummaryCrossPlotCollection.h"
 #include "RimSummaryPlotCollection.h"
+#include "RimVfpPlotCollection.h"
 #include "RimViewWindow.h"
 #include "RimWellLogPlot.h"
 #include "RimWellLogPlotCollection.h"
@@ -85,6 +86,9 @@ RimMainPlotCollection::RimMainPlotCollection()
     CAF_PDM_InitFieldNoDefault( &m_multiPlotCollection, "RimMultiPlotCollection", "Multi Plots", "", "", "" );
     m_multiPlotCollection.uiCapability()->setUiHidden( true );
 
+    CAF_PDM_InitFieldNoDefault( &m_vfpPlotCollection, "VfpPlotCollection", "", "", "", "" );
+    m_vfpPlotCollection.uiCapability()->setUiHidden( true );
+
     m_wellLogPlotCollection            = new RimWellLogPlotCollection();
     m_rftPlotCollection                = new RimRftPlotCollection();
     m_pltPlotCollection                = new RimPltPlotCollection();
@@ -94,6 +98,7 @@ RimMainPlotCollection::RimMainPlotCollection()
     m_gridCrossPlotCollection          = new RimGridCrossPlotCollection;
     m_saturationPressurePlotCollection = new RimSaturationPressurePlotCollection;
     m_multiPlotCollection              = new RimMultiPlotCollection;
+    m_vfpPlotCollection                = new RimVfpPlotCollection();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -195,6 +200,14 @@ RimMultiPlotCollection* RimMainPlotCollection::multiPlotCollection()
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+RimVfpPlotCollection* RimMainPlotCollection::vfpPlotCollection()
+{
+    return m_vfpPlotCollection();
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 void RimMainPlotCollection::deleteAllContainedObjects()
 {
     m_wellLogPlotCollection()->wellLogPlots.deleteAllChildObjects();
@@ -206,6 +219,7 @@ void RimMainPlotCollection::deleteAllContainedObjects()
     m_flowPlotCollection()->closeDefaultPlotWindowAndDeletePlots();
     m_saturationPressurePlotCollection()->deleteAllChildObjects();
     m_multiPlotCollection()->deleteAllChildObjects();
+    m_vfpPlotCollection()->deleteAllChildObjects();
 }
 
 //--------------------------------------------------------------------------------------------------
