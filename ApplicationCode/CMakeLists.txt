@@ -507,6 +507,7 @@ set( UNITY_EXCLUDE_FILES
     qrc_ResInsight.cpp
     qrc_cafCommandFeatures.cpp
     ProjectDataModel/RimContourMapView.cpp
+    ProjectDataModel/RimVfpTableExtractor.cpp
     Commands/CompletionExportCommands/RicExportFractureCompletionsImpl.cpp
 )
 
