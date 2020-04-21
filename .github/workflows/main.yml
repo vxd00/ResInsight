@@ -64,7 +64,7 @@ jobs:
         run: |
           rm -rf cmakebuild/packages/_CPack_Packages
       - name: Test with pytest
-        if: "contains( matrix.os, 'windows')" 
+        if: "contains( matrix.os, 'windows_temp_disable')" 
         env:
           RESINSIGHT_EXECUTABLE: ${{ runner.workspace }}/ResInsight/cmakebuild/ApplicationCode/Release/ResInsight.exe
         run: |
