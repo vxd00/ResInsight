@@ -1377,7 +1377,7 @@ int RiaApplication::launchUnitTests()
 
     //
     // Use the gtest filter to execute a subset of tests
-    //::testing::GTEST_FLAG( filter ) = "*RifCaseRealizationParametersReaderTest*";
+    ::testing::GTEST_FLAG( filter ) = "*RifColorLegendData*";
     //
     //
 
