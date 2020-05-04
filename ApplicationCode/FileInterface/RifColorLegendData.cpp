@@ -111,14 +111,17 @@ cvf::ref<RigFormationNames> RifColorLegendData::readLyrFormationNameFile( const 
                 startK  = tmp < endK ? tmp : endK;
                 endK    = tmp > endK ? tmp : endK;
 
-                cvf::Color3f formationColor;
-
                 if (QColor::isValidColor(colorWord))   // formation color present at end of line
                 {
-                    bool b = convertStringToColor(colorWord, &formationColor);
-                }
+                    cvf::Color3f formationColor;
 
-                formationNames->appendFormationRange( formationName, startK - 1, endK - 1 );
+                    convertStringToColor(colorWord, &formationColor);
+                    formationNames->appendFormationRange( formationName, formationColor, startK - 1, endK - 1 );
+                }
+                else // no color present
+                {
+                    formationNames->appendFormationRange( formationName, startK - 1, endK - 1 );
+                }
             }
             else if ( numberWords.size() == 1 )
             {
@@ -132,7 +135,17 @@ cvf::ref<RigFormationNames> RifColorLegendData::readLyrFormationNameFile( const 
                     continue;
                 }
 
-                formationNames->appendFormationRangeHeight( formationName, kLayerCount );
+                if (QColor::isValidColor(colorWord))   // formation color present at end of line
+                {
+                    cvf::Color3f formationColor;
+
+                    convertStringToColor(colorWord, &formationColor);
+                    formationNames->appendFormationRangeHeight(formationName, formationColor, kLayerCount);
+                }
+                else // no color present
+                {
+                    formationNames->appendFormationRangeHeight(formationName, kLayerCount);
+                }
             }
             else
             {
