@@ -1,8 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (C) 2011-     Statoil ASA
-//  Copyright (C) 2013-     Ceetron Solutions AS
-//  Copyright (C) 2011-2012 Ceetron AS
+//  Copyright (C) 2020 Equinor ASA
 //
 //  ResInsight is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -43,23 +41,11 @@ public:
     RimColorLegendCollection();
     ~RimColorLegendCollection() override;
 
-public: // Pdm Fields
-    
+public:
+    void appendColorLegend( RimColorLegend* colorLegend );
 
-public: // Methods
-    void appendColorLegend(RimColorLegend* colorLegend);
-
-    // Overrides from PdmObject
     void fieldChangedByUi( const caf::PdmFieldHandle* changedField, const QVariant& oldValue, const QVariant& newValue ) override;
 
-protected:
-/*
-    void defineEditorAttribute( const caf::PdmFieldHandle* field,
-                                QString                    uiConfigName,
-                                caf::PdmUiEditorAttribute* attribute ) override;
-*/
 private:
     caf::PdmChildArrayField<RimColorLegend*> m_colorLegends;
-
-
 };

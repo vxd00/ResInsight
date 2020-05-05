@@ -1,8 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (C) 2011-     Statoil ASA
-//  Copyright (C) 2013-     Ceetron Solutions AS
-//  Copyright (C) 2011-2012 Ceetron AS
+//  Copyright (C) 2020 Equinor ASA
 //
 //  ResInsight is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -20,8 +18,6 @@
 
 #include "RimColorLegendCollection.h"
 #include "RimColorLegend.h"
-
-#include "cafUtils.h"
 
 CAF_PDM_SOURCE_INIT( RimColorLegendCollection, "ColorLegendCollection" );
 
@@ -41,7 +37,6 @@ RimColorLegendCollection::RimColorLegendCollection()
 //--------------------------------------------------------------------------------------------------
 RimColorLegendCollection::~RimColorLegendCollection()
 {
-    m_colorLegends.deleteAllChildObjects();
 }
 
 //--------------------------------------------------------------------------------------------------

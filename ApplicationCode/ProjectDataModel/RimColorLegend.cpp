@@ -1,8 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (C) 2011-     Statoil ASA
-//  Copyright (C) 2013-     Ceetron Solutions AS
-//  Copyright (C) 2011-2012 Ceetron AS
+//  Copyright (C) 2020 Equinor ASA
 //
 //  ResInsight is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -21,7 +19,6 @@
 #include "RimColorLegend.h"
 #include "RimColorLegendItem.h"
 
-
 CAF_PDM_SOURCE_INIT( RimColorLegend, "ColorLegend" );
 
 //--------------------------------------------------------------------------------------------------
@@ -29,9 +26,9 @@ CAF_PDM_SOURCE_INIT( RimColorLegend, "ColorLegend" );
 //--------------------------------------------------------------------------------------------------
 RimColorLegend::RimColorLegend()
 {
-    CAF_PDM_InitObject("ColorLegend", ":/Legend.png", "", "");
+    CAF_PDM_InitObject( "ColorLegend", ":/Legend.png", "", "" );
 
-    CAF_PDM_InitField(&m_colorLegendName, "ColorLegendName", QString(""), "Color Legend Name", "", "", "");
+    CAF_PDM_InitField( &m_colorLegendName, "ColorLegendName", QString( "" ), "Color Legend Name", "", "", "" );
 
     CAF_PDM_InitFieldNoDefault( &m_colorLegendItems, "ColorLegendItems", "", "", "", "" );
     m_colorLegendItems.uiCapability()->setUiHidden( true );
@@ -42,9 +39,7 @@ RimColorLegend::RimColorLegend()
 //--------------------------------------------------------------------------------------------------
 RimColorLegend::~RimColorLegend()
 {
-    m_colorLegendItems.deleteAllChildObjects();
 }
-
 
 //--------------------------------------------------------------------------------------------------
 ///
@@ -57,27 +52,24 @@ caf::PdmFieldHandle* RimColorLegend::userDescriptionField()
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-void RimColorLegend::setColorLegendName(const QString& colorLegendName)
+void RimColorLegend::setColorLegendName( const QString& colorLegendName )
 {
     m_colorLegendName = colorLegendName;
 }
 
-
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-void RimColorLegend::appendColorLegendItem(RimColorLegendItem* colorLegendItem)
+void RimColorLegend::appendColorLegendItem( RimColorLegendItem* colorLegendItem )
 {
-    m_colorLegendItems.push_back(colorLegendItem);
+    m_colorLegendItems.push_back( colorLegendItem );
 }
-
 
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
 void RimColorLegend::fieldChangedByUi( const caf::PdmFieldHandle* changedField,
-                                            const QVariant&            oldValue,
-                                            const QVariant&            newValue )
+                                       const QVariant&            oldValue,
+                                       const QVariant&            newValue )
 {
 }
-

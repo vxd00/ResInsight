@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (C) 2016-     Statoil ASA
+//  Copyright (C) 2020 Equinor ASA
 //
 //  ResInsight is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ void RicImportColorCategories::onActionTriggered( bool isChecked )
     RimColorLegend* colorLegend = new RimColorLegend;
     colorLegend->setColorLegendName( "LYR imported color legend" );
 
-    for ( int i = 0; i < formationColors.size(); i++ )
+    for ( size_t i = 0; i < formationColors.size(); i++ )
     {
         RimColorLegendItem* colorLegendItem = new RimColorLegendItem;
 
@@ -81,7 +81,7 @@ void RicImportColorCategories::onActionTriggered( bool isChecked )
         colorLegend->appendColorLegendItem( colorLegendItem );
     }
 
-    RimProject* proj = RiaApplication::instance()->project();
+    RimProject* proj = RimProject::current();
 
     RimColorLegendCollection* colorLegendCollection = proj->colorLegendCollection;
 
