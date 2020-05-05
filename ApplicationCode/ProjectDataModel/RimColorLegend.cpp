@@ -49,6 +49,32 @@ RimColorLegend::~RimColorLegend()
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+caf::PdmFieldHandle* RimColorLegend::userDescriptionField()
+{
+    return &m_colorLegendName;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RimColorLegend::setColorLegendName(const QString& colorLegendName)
+{
+    m_colorLegendName = colorLegendName;
+}
+
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RimColorLegend::appendColorLegendItem(RimColorLegendItem* colorLegendItem)
+{
+    m_colorLegendItems.push_back(colorLegendItem);
+}
+
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 void RimColorLegend::fieldChangedByUi( const caf::PdmFieldHandle* changedField,
                                             const QVariant&            oldValue,
                                             const QVariant&            newValue )

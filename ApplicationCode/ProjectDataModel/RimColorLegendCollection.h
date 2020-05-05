@@ -47,7 +47,7 @@ public: // Pdm Fields
     
 
 public: // Methods
-
+    void appendColorLegend(RimColorLegend* colorLegend);
 
     // Overrides from PdmObject
     void fieldChangedByUi( const caf::PdmFieldHandle* changedField, const QVariant& oldValue, const QVariant& newValue ) override;

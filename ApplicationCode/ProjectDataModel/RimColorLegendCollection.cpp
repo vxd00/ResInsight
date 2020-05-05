@@ -23,7 +23,6 @@
 
 #include "cafUtils.h"
 
-
 CAF_PDM_SOURCE_INIT( RimColorLegendCollection, "ColorLegendCollection" );
 
 //--------------------------------------------------------------------------------------------------
@@ -31,7 +30,7 @@ CAF_PDM_SOURCE_INIT( RimColorLegendCollection, "ColorLegendCollection" );
 //--------------------------------------------------------------------------------------------------
 RimColorLegendCollection::RimColorLegendCollection()
 {
-    CAF_PDM_InitObject( "ColorLegendCollection", "", "", "" );
+    CAF_PDM_InitObject( "ColorLegendCollection", ":/Formations16x16.png", "", "" );
 
     CAF_PDM_InitFieldNoDefault( &m_colorLegends, "ColorLegends", "", "", "", "" );
     m_colorLegends.uiCapability()->setUiHidden( true );
@@ -45,32 +44,19 @@ RimColorLegendCollection::~RimColorLegendCollection()
     m_colorLegends.deleteAllChildObjects();
 }
 
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RimColorLegendCollection::appendColorLegend( RimColorLegend* colorLegend )
+{
+    m_colorLegends.push_back( colorLegend );
+}
 
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
 void RimColorLegendCollection::fieldChangedByUi( const caf::PdmFieldHandle* changedField,
-                                            const QVariant&            oldValue,
-                                            const QVariant&            newValue )
+                                                 const QVariant&            oldValue,
+                                                 const QVariant&            newValue )
 {
 }
-
-
-/*
-//--------------------------------------------------------------------------------------------------
-///
-//--------------------------------------------------------------------------------------------------
-void RimColorLegendCollection::defineEditorAttribute( const caf::PdmFieldHandle* field,
-                                                 QString                    uiConfigName,
-                                                 caf::PdmUiEditorAttribute* attribute )
-{
-    if ( field == &directory )
-    {
-        caf::PdmUiFilePathEditorAttribute* myAttr = dynamic_cast<caf::PdmUiFilePathEditorAttribute*>( attribute );
-        if ( myAttr )
-        {
-            myAttr->m_selectDirectory = true;
-        }
-    }
-}
-*/

@@ -1,8 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (C) 2011-     Statoil ASA
-//  Copyright (C) 2013-     Ceetron Solutions AS
-//  Copyright (C) 2011-2012 Ceetron AS
+//  Copyright (C) 2016-     Statoil ASA
 //
 //  ResInsight is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -20,42 +18,19 @@
 
 #pragma once
 
-#include "cafPdmChildArrayField.h"
-#include "cafPdmField.h"
-#include "cafPdmObject.h"
+#include "cafCmdFeature.h"
 
-
-class RimColorLegendItem;
-
-namespace caf
-{
-class PdmUiEditorAttribute;
-}
 
 //==================================================================================================
 ///
-///
 //==================================================================================================
-class RimColorLegend : public caf::PdmObject
+class RicImportColorCategories : public caf::CmdFeature
 {
-    CAF_PDM_HEADER_INIT;
+    CAF_CMD_HEADER_INIT;
 
-public:
-    RimColorLegend();
-    ~RimColorLegend() override;
-
-
-public:
-    void setColorLegendName(const QString& colorLegendName);
-    void appendColorLegendItem(RimColorLegendItem* colorLegendItem);
-
-public:
-    virtual caf::PdmFieldHandle* userDescriptionField() override;
-
-    void fieldChangedByUi( const caf::PdmFieldHandle* changedField, const QVariant& oldValue, const QVariant& newValue ) override;
-
-
-private:
-    caf::PdmField<QString>                           m_colorLegendName;
-    caf::PdmChildArrayField<RimColorLegendItem*>     m_colorLegendItems;
+protected:
+    // Overrides
+    bool isCommandEnabled() override;
+    void onActionTriggered( bool isChecked ) override;
+    void setupActionLook( QAction* actionToSetup ) override;
 };

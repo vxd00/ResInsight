@@ -18,8 +18,7 @@
 
 #include "RigFormationNames.h"
 
-const cvf::Color3f NO_COLOR(-1.0f, -1.0f, -1.0f);
-
+const cvf::Color3f NO_COLOR( -1.0f, -1.0f, -1.0f );
 
 //--------------------------------------------------------------------------------------------------
 ///
@@ -50,16 +49,16 @@ QString RigFormationNames::formationNameFromKLayerIdx( size_t Kidx )
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-bool RigFormationNames::formationColorFromKLayerIdx(size_t Kidx, cvf::Color3f* formationColor)
+bool RigFormationNames::formationColorFromKLayerIdx( size_t Kidx, cvf::Color3f* formationColor )
 {
-    int idx = formationIndexFromKLayerIdx(Kidx);
+    int idx = formationIndexFromKLayerIdx( Kidx );
 
-    if (idx == -1 || idx >= static_cast<int>(m_formationColors.size()))
+    if ( idx == -1 || idx >= static_cast<int>( m_formationColors.size() ) )
     {
         return false;
     }
 
-    if (m_formationColors[idx] == NO_COLOR) return false;
+    if ( m_formationColors[idx] == NO_COLOR ) return false;
 
     *formationColor = m_formationColors[idx];
     return true;
@@ -86,20 +85,20 @@ void RigFormationNames::appendFormationRange( const QString& name, int kStartIdx
         m_nameIndexPrKLayer[kIdx] = nameIdx;
     }
 
-    m_formationColors.push_back(NO_COLOR);      // mark missing color
+    m_formationColors.push_back( NO_COLOR ); // signify missing color
 }
 
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-void RigFormationNames::appendFormationRange(const QString& name, cvf::Color3f color, int kStartIdx, int kEndIdx)
+void RigFormationNames::appendFormationRange( const QString& name, cvf::Color3f color, int kStartIdx, int kEndIdx )
 {
-    CVF_ASSERT(kStartIdx <= kEndIdx);
+    CVF_ASSERT( kStartIdx <= kEndIdx );
 
-    RigFormationNames::appendFormationRange(name, kStartIdx, kEndIdx);
+    RigFormationNames::appendFormationRange( name, kStartIdx, kEndIdx );
 
-    m_formationColors.pop_back();         // delete default color
-    m_formationColors.push_back(color);   // override with missing color
+    m_formationColors.pop_back(); // delete default color
+    m_formationColors.push_back( color ); // override with missing color
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -122,18 +121,18 @@ void RigFormationNames::appendFormationRangeHeight( const QString& name, int kLa
         m_nameIndexPrKLayer[kIdx] = nameIdx;
     }
 
-    m_formationColors.push_back(NO_COLOR);      // mark missing color
+    m_formationColors.push_back( NO_COLOR ); // signify missing color
 }
 
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-void RigFormationNames::appendFormationRangeHeight(const QString& name, cvf::Color3f color, int kLayerCount)
+void RigFormationNames::appendFormationRangeHeight( const QString& name, cvf::Color3f color, int kLayerCount )
 {
-    if (kLayerCount < 1) return;
+    if ( kLayerCount < 1 ) return;
 
-    RigFormationNames::appendFormationRangeHeight(name, kLayerCount);
+    RigFormationNames::appendFormationRangeHeight( name, kLayerCount );
 
-    m_formationColors.pop_back();         // delete default color
-    m_formationColors.push_back(color);   // override with missing color
+    m_formationColors.pop_back(); // delete default color
+    m_formationColors.push_back( color ); // override with missing color
 }

@@ -136,6 +136,7 @@
 #include "RimWellPathFractureCollection.h"
 #include "RimWellPltPlot.h"
 #include "RimWellRftPlot.h"
+#include "RimColorLegendCollection.h"
 
 #include "RiuMainWindow.h"
 
@@ -781,6 +782,10 @@ caf::CmdFeatureMenuBuilder RimContextCommandBuilder::commandsFromSelection()
         else if ( dynamic_cast<RimSimWellInViewCollection*>( firstUiItem ) )
         {
             menuBuilder << "RicExportCompletionsForVisibleSimWellsFeature";
+        }
+        else if (dynamic_cast<RimColorLegendCollection*>(firstUiItem))
+        {
+            menuBuilder << "RicImportColorCategories";
         }
         else if ( dynamic_cast<RimFormationNames*>( firstUiItem ) )
         {

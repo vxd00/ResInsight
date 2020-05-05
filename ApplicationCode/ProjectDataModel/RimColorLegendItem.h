@@ -22,9 +22,9 @@
 
 #include "cafPdmChildArrayField.h"
 #include "cafPdmField.h"
-#include "cafPdmObject.h"
-
 #include "cafPdmFieldCvfColor.h"
+#include "cafPdmObject.h"
+#include "cafPdmProxyValueField.h"
 
 namespace caf
 {
@@ -43,15 +43,19 @@ public:
     RimColorLegendItem();
     ~RimColorLegendItem() override;
 
-
-
+    void setValues( const QString& categoryName, int categoryValue, const cvf::Color3f& color );
 
 public:
-    void fieldChangedByUi( const caf::PdmFieldHandle* changedField, const QVariant& oldValue, const QVariant& newValue ) override;
+    void                         fieldChangedByUi( const caf::PdmFieldHandle* changedField, const QVariant& oldValue, const QVariant& newValue ) override;
+    virtual caf::PdmFieldHandle* userDescriptionField() override;
 
 private:
-    caf::PdmField<cvf::Color3f>  m_color;
-    caf::PdmField<int>           m_categoryValue;
-    caf::PdmField<QString>       m_categoryName;
+    QString extractColorItemName() const;
 
+private:
+    caf::PdmField<cvf::Color3f> m_color;
+    caf::PdmField<int>          m_categoryValue;
+    caf::PdmField<QString>      m_categoryName;
+
+    caf::PdmProxyValueField<QString> m_nameProxy;
 };

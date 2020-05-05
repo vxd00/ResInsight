@@ -43,7 +43,8 @@ public:
 
     bool formationColorFromKLayerIdx(size_t Kidx, cvf::Color3f* formationColor);
 
-    const std::vector<QString>& formationNames() const { return m_formationNames; }
+    const std::vector<QString>&      formationNames()  const { return m_formationNames; }
+    const std::vector<cvf::Color3f>& formationColors() const { return m_formationColors; }
 
     void appendFormationRange( const QString& name, int kStartIdx, int kEndIdx );
     void appendFormationRangeHeight( const QString& name, int kLayerCount );
