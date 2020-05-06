@@ -25,8 +25,6 @@
 
 #include "cvfColor3.h"
 
-
-
 class RigFormationNames : public cvf::Object
 {
 public:
@@ -39,21 +37,25 @@ public:
         return m_nameIndexPrKLayer[Kidx];
     }
 
-    QString      formationNameFromKLayerIdx( size_t Kidx );
+    QString formationNameFromKLayerIdx( size_t Kidx );
 
-    bool formationColorFromKLayerIdx(size_t Kidx, cvf::Color3f* formationColor);
+    bool formationColorFromKLayerIdx( size_t Kidx, cvf::Color3f* formationColor );
 
-    const std::vector<QString>&      formationNames()  const { return m_formationNames; }
+    const std::vector<QString>&      formationNames() const { return m_formationNames; }
     const std::vector<cvf::Color3f>& formationColors() const { return m_formationColors; }
 
     void appendFormationRange( const QString& name, int kStartIdx, int kEndIdx );
     void appendFormationRangeHeight( const QString& name, int kLayerCount );
 
-    void appendFormationRange(const QString& name, cvf::Color3f color, int kStartIdx, int kEndIdx);
-    void appendFormationRangeHeight(const QString& name, cvf::Color3f color, int kLayerCount);
+    void appendFormationRange( const QString& name, cvf::Color3f color, int kStartIdx, int kEndIdx );
+    void appendFormationRangeHeight( const QString& name, cvf::Color3f color, int kLayerCount );
+
+private:
+    static cvf::Color3f undefinedColor();
+    void appendFormationRangeWithColor( const QString& name, cvf::Color3f color, int kStartIdx, int kEndIdx );
 
 private:
     std::vector<int>          m_nameIndexPrKLayer;
     std::vector<QString>      m_formationNames;
-    std::vector<cvf::Color3f> m_formationColors;    // optional color per formation
+    std::vector<cvf::Color3f> m_formationColors; // optional color per formation
 };
