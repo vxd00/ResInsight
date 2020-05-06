@@ -460,7 +460,9 @@ if (RESINSIGHT_INCLUDE_APPFWK_TESTS)
 
     # Executables
     add_subdirectory(Fwk/AppFwk/cafTests/cafTestApplication)
+    add_subdirectory(Fwk/AppFwk/cafTests/cafTestCvfApplication)
     set_property(TARGET cafTestApplication PROPERTY FOLDER "AppFwkTests")
+    set_property(TARGET cafTestCvfApplication PROPERTY FOLDER "AppFwkTests")
 endif()
 
 
