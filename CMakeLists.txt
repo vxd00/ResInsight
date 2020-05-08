@@ -1,5 +1,18 @@
 cmake_minimum_required (VERSION 2.8.12)
 
+################################################################################
+# buildcache
+# 
+# buildcache will be used if found in path
+################################################################################
+find_program(buildcache_program buildcache)
+if(buildcache_program)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${buildcache_program}")
+    message( STATUS "Found buildcache from : ${buildcache_program}" )
+else()
+    message( STATUS "No buildcache found" )
+endif()
+
 include (CheckCSourceCompiles)
 project (ResInsight)
 
@@ -91,6 +104,11 @@ include(cafCotireTools)
 # ERT
 ################################################################################
 
+# Use of CMAKE_CXX_COMPILER_LAUNCHER is not working with libecl. Disable by temporarily setting
+# compiler launcher to nothing
+set(TEMP_CMAKE_CXX_COMPILER_LAUNCHER ${CMAKE_CXX_COMPILER_LAUNCHER})
+set(CMAKE_CXX_COMPILER_LAUNCHER)
+
 if (NOT MSVC)
   # Linux: Optional configuration of externally installed ERT, requires path to libraries and includes
   set(RESINSIGHT_ERT_EXTERNAL_LIB_ROOT "" CACHE PATH "Path to installed ERT libraries")
@@ -159,6 +177,9 @@ else()
     set(BUILD_SHARED_LIBS ${ORIGINAL_BUILD_SHARED_LIBS})
     
 endif(RESINSIGHT_ERT_EXTERNAL_LIB_ROOT OR RESINSIGHT_ERT_EXTERNAL_INCLUDE_ROOT)
+
+# restore buildcache when libecl has been configured
+set(CMAKE_CXX_COMPILER_LAUNCHER ${TEMP_CMAKE_CXX_COMPILER_LAUNCHER})
 
 ###############################################
 # Init GIT submodules if they haven't already #
@@ -411,9 +432,6 @@ set_property(TARGET cafPdmScripting PROPERTY FOLDER "AppFwk")
 add_subdirectory(Fwk/AppFwk/cafCommandFeatures)
 set_property(TARGET cafCommandFeatures PROPERTY FOLDER "AppFwk")
 
-
-#add_subdirectory(Fwk/AppFwk/cafTests/cafTestCvfApplication)
-
 add_subdirectory(Fwk/AppFwk/cafTensor)
 add_subdirectory(Fwk/AppFwk/cafHexInterpolator)
 
@@ -461,6 +479,9 @@ if (RESINSIGHT_INCLUDE_APPFWK_TESTS)
     # Executables
     add_subdirectory(Fwk/AppFwk/cafTests/cafTestApplication)
     set_property(TARGET cafTestApplication PROPERTY FOLDER "AppFwkTests")
+    
+    add_subdirectory(Fwk/AppFwk/cafTests/cafTestCvfApplication)
+    set_property(TARGET cafTestCvfApplication PROPERTY FOLDER "AppFwkTests")
 endif()
 
 

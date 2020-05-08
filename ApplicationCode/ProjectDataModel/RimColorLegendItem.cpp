@@ -63,6 +63,30 @@ void RimColorLegendItem::setValues( const QString& categoryName, int categoryVal
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+const cvf::Color3f& RimColorLegendItem::color() const
+{
+    return m_color();
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+const QString& RimColorLegendItem::categoryName() const
+{
+    return m_categoryName();
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+int RimColorLegendItem::categoryValue() const
+{
+    return m_categoryValue();
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 void RimColorLegendItem::fieldChangedByUi( const caf::PdmFieldHandle* changedField,
                                            const QVariant&            oldValue,
                                            const QVariant&            newValue )
@@ -83,4 +107,16 @@ caf::PdmFieldHandle* RimColorLegendItem::userDescriptionField()
 QString RimColorLegendItem::extractColorItemName() const
 {
     return QString( "%1" ).arg( m_categoryValue, 2, 10, QChar( '0' ) ) + " " + m_categoryName;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RimColorLegendItem::defineUiTreeOrdering( caf::PdmUiTreeOrdering& uiTreeOrdering, QString uiConfigName /*= ""*/ )
+{
+    QColor qcolor( m_color().rByte(), m_color().gByte(), m_color().bByte() );
+
+    caf::QIconProvider iconProvider = this->uiIconProvider();
+    iconProvider.setBackgroundColor( qcolor );
+    this->setUiIcon( iconProvider );
 }

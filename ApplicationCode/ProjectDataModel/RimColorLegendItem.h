@@ -41,10 +41,14 @@ public:
     RimColorLegendItem();
     ~RimColorLegendItem() override;
 
-    void setValues( const QString& categoryName, int categoryValue, const cvf::Color3f& color );
+    void                setValues( const QString& categoryName, int categoryValue, const cvf::Color3f& color );
+    const cvf::Color3f& color() const;
+    const QString&      categoryName() const;
+    int                 categoryValue() const;
 
 public:
-    void                 fieldChangedByUi( const caf::PdmFieldHandle* changedField, const QVariant& oldValue, const QVariant& newValue ) override;
+    void fieldChangedByUi( const caf::PdmFieldHandle* changedField, const QVariant& oldValue, const QVariant& newValue ) override;
+    void defineUiTreeOrdering( caf::PdmUiTreeOrdering& uiTreeOrdering, QString uiConfigName /*= ""*/ ) override;
     caf::PdmFieldHandle* userDescriptionField() override;
 
 private:
