@@ -549,17 +549,16 @@ bool AABBTree::buildTree(AABBTreeNodeInternal* pNode, size_t iFromIdx, size_t iT
     }
     else
     {
-        const size_t maxInbalance = 1000u;
+        const size_t maxInbalance = 100u;
         size_t rangeA = iMid - iFromIdx;
         size_t rangeB = iToIdx - iMid;
         if (rangeA > maxInbalance * rangeB || rangeB > maxInbalance * rangeA)
         {
-            // Extremely imbalanced tree. Sort leaves and chose iMid as the median of the centres.
-            std::sort(m_ppLeaves.begin() + iFromIdx, m_ppLeaves.begin() + iToIdx, [=](const AABBTreeNodeLeaf* lhs, const AABBTreeNodeLeaf* rhs)
+            iMid = (iToIdx + iFromIdx)/2;
+            std::nth_element(m_ppLeaves.begin() + iFromIdx, m_ppLeaves.begin() + iMid, m_ppLeaves.begin() + iToIdx, [=](const AABBTreeNodeLeaf* lhs, const AABBTreeNodeLeaf* rhs)
             {
                 return lhs->boundingBoxCenter()[iLongestAxis] < rhs->boundingBoxCenter()[iLongestAxis];
             });
-            iMid = (iToIdx + iFromIdx)/2;
         }
     }
 
