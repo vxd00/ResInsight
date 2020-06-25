@@ -804,10 +804,12 @@ void RiuQwtPlotWidget::recalculateAxisExtents( QwtPlot::Axis axis )
 //--------------------------------------------------------------------------------------------------
 caf::UiStyleSheet RiuQwtPlotWidget::createPlotStyleSheet() const
 {
-    QColor backgroundColor       = QColor( "white" );
-    QColor highlightColor        = QApplication::palette().highlight().color();
-    QColor blendedHighlightColor = RiaColorTools::blendQColors( highlightColor, backgroundColor, 1, 20 );
-    QColor nearlyBackgroundColor = RiaColorTools::blendQColors( highlightColor, backgroundColor, 1, 40 );
+    auto textColor         = QApplication::palette().color( QPalette::Text );
+    auto textContrastColor = RiaColorTools::contrastColor( textColor );
+
+    QColor backgroundColor = textContrastColor;
+
+    QColor highlightColor = QApplication::palette().highlight().color();
 
     caf::UiStyleSheet styleSheet;
     styleSheet.set( "background-color", backgroundColor.name() );
@@ -823,9 +825,18 @@ caf::UiStyleSheet RiuQwtPlotWidget::createPlotStyleSheet() const
 //--------------------------------------------------------------------------------------------------
 caf::UiStyleSheet RiuQwtPlotWidget::createCanvasStyleSheet() const
 {
+    QString bgColor = "#FAFAFA";
+
+    auto textColor = QApplication::palette().color( QPalette::Text );
+    if ( RiaColorTools::isBrightnessAboveThreshold( RiaColorTools::fromQColorTo3f( textColor ) ) )
+    {
+        bgColor = "#090909";
+    }
+
     caf::UiStyleSheet styleSheet;
-    styleSheet.set( "background-color", "#FAFAFA" );
+    styleSheet.set( "background-color", bgColor );
     styleSheet.set( "border", "1px solid LightGray" );
+
     return styleSheet;
 }
 
