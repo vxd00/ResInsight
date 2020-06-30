@@ -214,6 +214,8 @@ void RicNewFractureModelPlotFeature::createFormationTrack( RimFractureModelPlot*
     formationTrack->setFormationCase( eclipseCase );
     formationTrack->setAnnotationType( RiuPlotAnnotationTool::RegionAnnotationType::FORMATION_ANNOTATIONS );
     formationTrack->setVisibleXRange( 0.0, 0.0 );
+    formationTrack->setOverburdenHeight( fractureModel->overburdenHeight() );
+    formationTrack->setUnderburdenHeight( fractureModel->underburdenHeight() );
     formationTrack->setColSpan( RimPlot::ONE );
 }
 
@@ -231,6 +233,8 @@ void RicNewFractureModelPlotFeature::createFaciesTrack( RimFractureModelPlot* pl
     faciesTrack->setFormationCase( eclipseCase );
     faciesTrack->setAnnotationType( RiuPlotAnnotationTool::RegionAnnotationType::RESULT_PROPERTY_ANNOTATIONS );
     faciesTrack->setRegionPropertyResultType( RiaDefines::ResultCatType::INPUT_PROPERTY, defaultProperty );
+    faciesTrack->setOverburdenHeight( fractureModel->overburdenHeight() );
+    faciesTrack->setUnderburdenHeight( fractureModel->underburdenHeight() );
 
     RimColorLegend* faciesColors = RimProject::current()->colorLegendCollection()->findByName( "Facies colors" );
     if ( faciesColors )
